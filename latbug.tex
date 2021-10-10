@@ -1,0 +1,16 @@
+\RequirePackage{latexbug}
+\documentclass{article}
+
+\makeatletter
+\newcommand\mycurrentlabel{\@currentlabel}
+\newcommand\mycurrentcounter{\@currentcounter}
+\makeatother
+
+\begin{document}
+\section{Section 1}
+
+Foo.\footnote{Bar.}
+
+Baz.\footnote{\mycurrentlabel{} \mycurrentcounter}
+
+\end{document}
