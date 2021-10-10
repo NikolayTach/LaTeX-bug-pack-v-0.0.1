@@ -1,0 +1,3492 @@
+
+ %%%% email-ru.tex
+   %% Author: Laurent Siebenmann,
+   %% Math B^at 425, Univ. Paris-Sud, 91405-Orsay
+   %% Email addresses: (use several) lcs@topo.math.u-psud.fr,
+   %% lcs@math.polytechnique.fr, laurent@math.toronto.edu
+   %%
+   %% Version 2001.02.06 of Feb 2001 (**beta**)
+   %% http://topo.math.u-psud.fr/~lcs/ASCII-Cyrillic/
+   %% Look for future versions on CTAN archives.
+   %%
+   %% Copyright conditions according to Gnu Public Licence.
+   %%
+   %% This utility converts a new *lossless* ASCII
+   %% transcription of Russian/Ukrainian text
+   %% -- called ASCII-Cyrillic --
+   %% to and from the 5 most used 8-bit Cyrillic
+   %% text file encodings. (Others can be introduced.)
+   %%
+   %% "email-ru.tex" is particularly useful for
+   %% persons outside of Russia obliged to use
+   %% a non-Cyrillic keyboard for typing Russian.
+   %%
+   %% It is also good for viewing Cyrillic
+   %% text files (including ".tex" files)
+   %% when one has no suitable Cyrillic screen font.
+   %%
+   %% It allows Cyrillic 8-bit text files to be sent
+   %% in the body of any email message.
+   %% This feature inspired the name "email-ru.tex".
+   %%
+   %% Launch "Plain TeX" of D. Knuth on this file.
+   %% The usual command line is simply:
+   %%      tex email-ru <return>
+   %% Then follow instructions given on screen.
+   %% Documentation follows the last \endinput.
+ %%%%
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%       Params and Tools         %%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ \catcode`\@=11
+ \catcode`\/=13
+ \catcode`\|=13
+ \chardef\CatOne@=\catcode1\relax %% storage
+ \catcode1=13 % A syntactical trick for AccIN
+ %% \HiOctetsCat@{13} will be in force for assimilation
+ \errorcontextlines=20
+
+ \let\ex@\expandafter
+ \let\cs@\csname
+ \let\ecs@\endcsname
+ \let\ne@\noexpand
+ \def\@e{}
+
+ \endlinechar=-1
+
+ \def\Sharp@{\string##}
+
+ %%temporarily suppress Plain's logging of allocations
+ \let\wlog@ld\wlog
+ \def\wlog#1{\relax}
+
+ \newif \ifGoodOptions@
+
+ \def\empty{}
+ \def\Line@{}
+
+ \ex@\def\cs@ email-ru-version\ecs@{v2001.02.06}
+
+ %% Will use loops with fuller syntax
+ \def\Loop@#1\Repeat@{%
+    \def\Iterate@{#1\expandafter\Iterate@\fi}%
+    \Iterate@}
+
+ \def\iwr@{\immediate\write16}%
+ \def\wr@{\immediate\write\MainStreamOut@}%
+ %\def\Wr@#1{\iwr@{#1}\wr@{#1}} %% for tests
+ \let\Wr@\wr@ %% for tests
+
+ %\def\@EndLine{}%
+ \def\Gobble@#1{}%
+ \edef\OtherBacksl@{\ex@\Gobble@\string\\}%
+ \def\ExpTwiceAfter@{\ex@\ex@\ex@}%
+ \def\ExpThriceAfter@{\ex@\ExpTwiceAfter@\ex@}%
+ \def\ExpFourTimesAfter@{\ex@\ExpThriceAfter@\ex@}%
+
+
+ \ifx\undefined\@@end
+   \let\End\end
+ \else
+   \def\End{\cs@ @@end\ecs@}
+ \fi
+
+
+ %%%% WORD-PROCESSING MACROS from boxedeps.tex
+  %% %% \long was evicted for email-ru
+  %%% \IN@0#1@#2@ : Is 1st exp of #1 in 1st exp of #2 ??
+   %% Answer in \ifIN@
+ %\let\ex@\expandafter
+ \newif\ifIN@\def\IN@{\ex@\INN@\ex@}
+  \def\INN@0#1@#2@{\def\NI@##1#1##2##3\ENDNI@
+    {\ifx\m@rker##2\IN@false\else\IN@true\fi}%
+     \ex@\NI@#2@@#1\m@rker\ENDNI@}
+  \def\m@rker{\m@@rker}
+
+  %%%  \SPLIT@0#1@#2@  :  Split 1st exp of #2 at 1st exp of #1
+   %%  \Initialtoks@ , \Terminaltoks@ will contain pieces
+  \newtoks\Initialtoks@  \newtoks\Terminaltoks@
+  \def\SPLIT@{\ex@\SPLITT@\ex@}
+  \def\SPLITT@0#1@#2@{\def\TTILPS@##1#1##2@{%
+     \Initialtoks@{##1}\Terminaltoks@{##2}}\ex@\TTILPS@#2@}
+
+ %%% \CHAIN@
+ \newtoks\Chaintoks@
+ \newtoks\Linktoks@
+ \def\CHAIN@{%
+    \edef\Chainholder@{\the\Chaintoks@\the\Linktoks@}%
+    \Chaintoks@\ex@{\Chainholder@}%
+   }
+
+ \newlinechar=`\^^J
+ \def\ChainLine@{\Linktoks@\ex@{\ex@^^J\Line@}\CHAIN@}
+
+
+
+
+
+ %%%%% ARITHMETIC MACRO \SetCharValue@#1
+   %% Supposing #1 has 1st expansion a character cat 11 ot 12
+   %% assign the octet to byte register \Char@
+ \def\SetCharValue@#1{\ex@\chardef\ex@\Char@\ex@`#1\relax}
+ %% \def\mac{a}\SetCharValue@{a}
+ %% \show\Char@\end
+
+ %%%%% \HiOctetsCat@#1
+  %%%
+ \def\HiOctetsCat@#1{%
+  \count255=128\relax
+  \Loop@
+   \catcode\count255=#1\relax
+   \advance\count255 by 1\relax
+  \ifnum
+   \count255<256\relax
+  \Repeat@
+  }
+
+ %%%%% \LowOctetsCat@#1
+  %%%
+ \def\LowOctetsCat@#1{%
+  \count255=0\relax
+  \Loop@
+   \catcode\count255=#1\relax
+   \advance\count255 by 1\relax
+  \ifnum
+   \count255<32\relax
+  \Repeat@
+  \catcode127=#1\relax
+  }
+
+ %%%%% \ASCIIOctetsCat@#1
+  %%%
+ \def\ASCIIOctetsCat@#1{%
+  \count255=32\relax
+  \Loop@
+   \catcode\count255=#1\relax
+   \advance\count255 by 1\relax
+  \ifnum
+   \count255<126\relax
+  \Repeat@
+  }
+
+ \def\MakeSlantPct@{\lccode`\~=`\%
+   \lowercase{\edef/{\string ~}}}%
+
+
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%         Tables         %%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+ %%% \@LigShorts...: Ru and Ukr variants
+  %% was \@HiOctetLigOutEncoding
+ \def\@LigShortsRu{%
+  /A A /B B /V V /G G /D D /E E /ZH ZH /Z Z %
+  /I I /ISHRT J /K K /L L /M M /N N /O O /P P %
+  /R R /S S /T T /U U /F F /H X /C TS /CH CH %
+  /SH SH /SHCH SHCH /HRDSN " %
+  /ERY Y /SFTSN ' /EREV E /YU JU /YA JA /YO E %
+  /a a /b b /v v /g g /d d /e e /zh zh /z z %
+  /i i /ishrt j /k k /l l /m m /n n /o o /p p %
+  /r r /s s /t t /u u /f f /h x /c ts /ch ch %
+  /sh sh /shch shch /hrdsn " %
+  /ery y /sftsn ' /erev e /yu ju /ya ja /yo e %
+  /USHRT U /ushrt u %% Byelorussian
+  /II II /ii ii %% Byelorussian (& Ukr)
+  %/textnumero No %
+  %/guillemotleft << %
+  %/guillemotright >> %
+  }
+
+
+ %%%%%% \@LigShortsUkr
+  %%% program also treats word-beginning phenomena:
+  %%% '{IE} => Ye, '{YI} => Yi, '{ISHRT} => Y
+  %%% '{YU} => Yu, '{YA} => Ya; also lower case
+ \def\@LigShortsUkr{\let\temp@=\0 \def\0{}%
+  /A A /B B /V V /G H /GUP G /D D /E E /IE IE /ZH ZH /Z Z %
+  /I Y /II I /YI I /ISHRT I /K K /L L /M M /N N /O O /P P %
+  /R R /S S /T T /U U /F F /H KH /C TS /CH Ch %
+  /SH Sh /SHCH Shch %% /HRDSN gone!
+  /APOS ' %
+  /SFTSN \0 /YU Iu /YA Ia %% avoid missing space problem
+  /a a /b b /v v /g h /gup g /d d /e e /ie ie /zh zh /z z %
+  /i y /ii i /yi i /ishrt i /k k /l l /m m /n n /o o /p p %
+  /r r /s s /t t /u u /f f /h kh /c ts /ch ch %
+  /sh sh /shch shch %%   /hrdsn gone!
+  /sftsn \0 /yu iu /ya ia %% avoid missing space problem
+  /apos ' %
+  %/textnumero No %
+  %/guillemotleft << %
+  %/guillemotright >> %
+  \let\0=\temp@
+  }
+
+
+ %%%%% \@SetLigShorts:  %% 8 to 7
+  %% s_ means short as function of LaTeX Tag
+ \def\@SetLigShorts{%
+   \def/##1 ##2 {\ex@\edef\cs@ ts_##1\ecs@{##2}%
+   }
+   \@TheLigShorts
+   }
+
+
+ %%%%%% \@AccShortsRu \@AccShortsUkr
+
+ \def\@AccShortsRu{%
+  /A A /B B /V V /G G /D D /E E /ZH 'G /ZH 'Z /Z Z %
+  /I I /ISHRT J /K K /L L /M M /N N /O O /P P %
+  /R R /S S /T T /U U /F F /H 'K /H X /C C /C 'T %% last dominates
+  /CH 'C /SH 'S /SH W /SHCH 'W /HRDSN Q %
+  /ERY Y /SFTSN H /EREV 'E /YU 'U /YA 'A /YO 'O %
+  /a a /b b /v v /g g /d d /e e /zh 'g /zh 'z /z z %
+  /i i /ishrt j /k k /l l /m m /n n /o o /p p %
+  /r r /s s /t t /u u /f f /h 'k /h x /c c /c 't /ch 'c %
+  /sh 's /sh w /shch 'w /hrdsn q %
+  /ery y /sftsn h /erev 'e /yu 'u /ya 'a /yo 'o %
+  %% Byelorussian
+  /USHRT 'V /ushrt 'v %% Byelorussian only
+  /II 'I /ii 'i %% Byelorussian (& Ukr but then I,i)
+  %% Following of questionable benefit
+  %/textnumero 'N %
+  %/guillemotleft '< %
+  %/guillemotright '> %
+  }
+
+ \def\@AccShortsUkr{%
+  /A A /B B /V V /G H /G G % preferred last
+  /GUP 'G /D D /E E /IE 'E /ZH 'Z /Z Z %
+  /I Y /II I /YI 'I /ISHRT J /K K /L L /M M /N N /O O /P P %
+  /R R /S S /T T /U U /F F /H 'K /H X /C C /C 'T /CH 'C %
+  /SH 'S /SH W /SHCH 'W %% HRDSN not Ukr
+  /YA 'A /YU 'U /SFTSN Q %% /YO 'O
+  /APOS '* %
+  %
+  /a a /b b /v v /g h /g g % preferred last
+  /gup 'g /d d /e e /ie 'e /zh 'z /z z %
+  /i y /ii i /yi 'i /ishrt j /k k /l l /m m /n n /o o /p p %
+  /r r /s s /t t /u u /f f /h 'k /h x /c c /c 't /ch 'c %
+  /sh 's /sh w /shch 'w %% hrdsn not ukr
+  /ya 'a /yu 'u /sftsn q %% /yo 'o
+  %
+  /apos '* %
+  }
+
+ \def\@SetAccOutShorts{%
+   \def/##1 ##2 {\ex@\def\cs@ ts_##1\ecs@{##2}}%
+   \@TheAccShorts
+   }
+
+ \def\@SetAccInShortsA{%
+   \def/##1 ##2 {\ex@\def\cs@ ts_##1\ecs@{##2}%
+   \ex@\edef\cs@ to_##1\ecs@{'\lbrace@##1\rbrace@}%% prelim background
+   }
+   \@TheAccShorts
+   }
+
+ \def\@SetAccInShortsB{%
+   \def/##1 ##2 {\ex@\edef\cs@ so_##2\ecs@{\cs@ to_##1\ecs@}}%
+   \@TheAccShorts
+   }
+
+
+ %%%%%%% \@LetterTags
+ %% list of all Cyrillic letter alphabetic tags used
+ %\def\@LetterTags{%
+ % %% Russian
+ % /A A /B B /V V /G G /D D /E E /ZH 'Z /Z Z %
+ % /I I /ISHRT J /K K /L L /M M /N N /O O /P P %
+ % /R R /S S /T T /U U /F F /H X /C 'T /CH C %
+ % /SH W /SHCH 'W /HRDSN Q %
+ % /ERY Y /SFTSN H /EREV 'E /YU 'U /YA 'A /YO 'O %
+ % %% + for Ukr, Byelorussian, Yug, Macedonian
+ % /DJE /DZE /DZHE /GJE /GUP /GUP /IE /II %
+ % /JE /KJE /LJE /NJE /TSJE /USHRT /YI %
+ % /APOS %
+ % %% + for Tatar and other
+ % /CHVCRS /KBEAK /NDSC /OTLD /SCHWA /SHHA /VCRS
+ % /Y /ZHDSC
+ % }
+
+ %%%%%% \@IdentifyAccInLetterTags
+ %   %% \te_<tag> --> \@e if abstract letter exists else \relax
+ %\def\@IdentifyAccInLetterTags{%
+ % \def/##1 {\ex@\def\cs@ te_##1\ecs@{}}%
+ % \@LetterTags}
+
+ %%%%%%% \@DiacriticStrings
+ %% table with 3 columns, / active three arg
+ %% #1 = LaTeX tag if known, #2 = short in letters,
+ %% #3 short in freestyle.%
+ %% | gives syntactical workaround
+ %% to be '[<thestring>]
+\def\@DiacriticStrings{%
+ /Delta,Delta,Delta.%
+ |{quotedblbase}{LLQ}{,,}%
+ |{quotesinglbase}{llq}{,}%
+ /textquotedblleft,LQ,``.%
+ /textquotedblright,RQ,".
+ %%/textquotedblright,RQ,''.% omit?????????????
+ %% double fails to define '["] last one wins
+ %% simply because only the map T --> S tag
+ %% to short tag currently used
+ /textquoteleft,lq,`.%
+ /textquoteright,rq,'.%
+ /textnumero,No,No.%
+ /textblacksquare,blacksquare,blacksquare.%
+ /paragraph,par,P.%
+ /section,section,S.%
+ /approx,approx,\string~\string~.%
+ /textbullet,bullet,**.%
+ /textperiodcentered,cdot,cdot.%
+ /textbrokenbar,bbar,bbar.%
+ /textcent,cent,cent.%
+ /copyright,cp,copyright.%
+ /textcurrency,coin,currency.%
+ /dagger,dag,dag.%
+ /ddagger,ddag,ddag.%
+ /degree,deg,deg.%
+ /divide,divide,div.%
+ |{dots}{dots}{...}%
+ /euro,euro,euro.
+ /florin,florin,florin.%
+ /lnot,lnot,neg.%
+ /lessequal,leq,<=.%
+ /greaterequal,geq,>=.%
+ /guillemotleft,LG,<<.%
+ /guillemotright,RG,>>.%
+ /guilsinglleft,lg,<.%
+ /guilsinglright,rg,>.%
+ /infinity,infty,infty.%
+ /mu,mu,mu.%
+ /nobreakspace,nbsp,nbsp.%
+ /textemdash,emdash,---.%
+ /textendash,endash,--.%
+ |{notequal}{neq}{\string/=}%
+ /perthousand,perK,perK.%
+ /partialdiff,partial,partial.%
+ /pounds,pounds,pounds.%
+ /plusminus,pm,+-.%
+ /textregistered,reg,registered.%
+ /softhyphen,shy,\string\-.
+ /solidus,solidus,solidus.
+ /radical,surd,surd.%
+ /texttrademark,tm,trademark.%
+ %/ukrhard,rq,'.%
+ }
+
+
+ %%%%% \@SetDiacShorts defines some \TS_<tag> --> <7short>
+  %% Caps for diacritics, T for my tex tag, S for short
+  %% Extracts info from \@DiacriticStrings
+ \def\@SetDiacShorts{%
+  \def/##1,##2,##3.{\ex@\edef\cs@ TS_##2\ecs@{##3}}%
+  \def|##1##2##3{\ex@\edef\cs@ TS_##2\ecs@{##3}}%
+  \@DiacriticStrings
+  }
+
+
+ %%%%%%%% Encoding Vectors
+  %% Each defines meanings for 128--255
+  %% /??. letter with tag ??
+  %% |??. non-letter with tag ??
+  %% /. undefined 'meaningless'
+  %% /apos.  Cyrillic apostrophe if used by language
+  %% and otherwise equivalent to |rq. (right quote)
+
+ %%%%%%% DosEncoding
+  %% Creator: Microsoft DOS code page 866
+  %% LaTeX Tag: cp866nav
+  %% Comment: Covers Russian, Byelorussian, Ukrainian
+  %%+ Many variants exist.
+  %%+ This is the New Alternative Variant (NAV)
+ \def\DosEncodingVect@{%
+  /A./B./V./G./D./E./ZH./Z.%% "80--
+  /I./ISHRT./K./L./M./N./O./P.%% --"8F
+  /R./S./T./U./F./H./C./CH.%% "90--
+  /SH./SHCH./HRDSN./ERY./SFTSN./EREV./YU./YA.%% --"9F
+  /a./b./v./g./d./e./zh./z.%% "A0--
+  /i./ishrt./k./l./m./n./o./p.%% --"AF
+  \.\.\.\.\.\.\.\.%% "B0--
+  \.\.\.\.\.\.\.\.%% --"BF
+  \.\.\.\.\.\.\.\.%% "C0--
+  \.\.\.\.\.\.\.\.%% --"CF
+  \.\.\.\.\.\.\.\.%% "D0--
+  \.\.\.\.\.\.\.\.%% --"DF
+  /r./s./t./u./f./h./c./ch.%% "E0--
+  /sh./shch./hrdsn./ery./sftsn./erev./yu./ya.%% --"EF
+  /YO./yo./GUP./gup./IE./ie./II./ii.%% "F0--
+  /YI./yi./USHRT./ushrt.|No.|LG.|RG.|nbsp.%% --"FF
+  }
+
+ %%%%%%% MacEncoding
+  %% LaTeX Tag: macukr
+  %% Comment: Covers Russian, Byelorussian, Ukrainian
+ \def\MacEncodingVect@{%
+  /A./B./V./G./D./E./ZH./Z.%% "80--
+  /I./ISHRT./K./L./M./N./O./P.%% --"8F
+  /R./S./T./U./F./H./C./CH.%% "90--
+  /SH./SHCH./HRDSN./ERY./SFTSN./EREV./YU./YA.%% --"9F
+  |dag.|deg./GUP.|pounds.|section.|cdot.|par./II.%% "A0--
+  |reg.|cp.|tm./TSJE./tsje.|neq./GJE./gje.%% --"AF
+  |infty.|pm.|leq.|geq./ii.|mu./gup./JE.%% "B0--
+  /IE./ie./YI./yi./LJE./lje./NJE./nje.%% --"BF
+  /je./DZE.|lnot.|surd.|florin.|approx.|Delta.|LG.%% "C0--
+  |RG.|dots.|nbsp./DJE./dje./KJE./kje./dze.%% --"CF
+  |endash.|emdash.|LQ.|RQ.|lq.\apos.|divide.|LLQ.%% "D0--
+  /USHRT./ushrt./DZHE./dzhe.|No./YO./yo./ya.%% --"DF
+  /a./b./v./g./d./e./zh./z.%% "E0--
+  /i./ishrt./k./l./m./n./o./p.%% --"EF
+  /r./s./t./u./f./h./c./ch.%% "F0--
+  /sh./shch./hrdsn./ery./sftsn./erev./yu.|coin.%% --"FF
+  }
+
+ %%%%%%% IsoEncoding
+  %% LaTeX Tag: ISO88595
+  %% Comment: ISO~8859-5 also called ISO-IR-144
+  %% Covers Russian, Byelorussian
+  %%+ but letter GUP gup of Ukrainian is missing
+ \def\IsoEncodingVect@{%
+  \.\.\.\.\.\.\.\.%% "80--
+  \.\.\.\.\.\.\.\.%% --"8F
+  \.\.\.\.\.\.\.\.%% "90--
+  \.\.\.\.\.\.\.\.%% --"9F
+  |nbsp./YO./TSJE./GJE./IE./DZE./II./YI.%% "A0--
+  /JE./LJE./NJE./DJE./KJE.|shy./USHRT./DZHE.%% --"AF
+  /A./B./V./G./D./E./ZH./Z.%% "B0--
+  /I./ISHRT./K./L./M./N./O./P.%% --"BF
+  /R./S./T./U./F./H./C./CH.%% "C0--
+  /SH./SHCH./HRDSN./ERY./SFTSN./EREV./YU./YA.%% --"CF
+  /a./b./v./g./d./e./zh./z.%% "D0--
+  /i./ishrt./k./l./m./n./o./p.%% --"DF
+  /r./s./t./u./f./h./c./ch.%% "E0--
+  /sh./shch./hrdsn./ery./sftsn./erev./yu./ya.%% --"EF
+  |No./yo./tsje./gje./ie./dze./ii./yi.%% "F0--
+  /je./lje./nje./dje./kje.|section./ushrt./dzhe.%% --"FF
+  }
+  %%
+
+ %%%%%%% WinEncoding
+  %% LaTeX Tag: cp1251
+  %% Comment: Microsoft Windows Cyrillic encoding
+  %%+ covers Russian, Byelorussian, Ukrainian
+ \def\WinEncodingVect@{%
+  /TSJE./GJE.|llq./gje.|LLQ.|dots.|dag.|ddag.%% "80--
+  |euro.|perK./LJE.|lg./NJE./KJE./DJE./DZHE.%% --"8F
+  /tsje.|lq.\apos.|LQ.|RQ.|bullet.|endash.|emdash.%% "90--
+  |solidus.|tm./lje.|rg./nje./kje./dje./dzhe.%% --"9F
+  |nbsp./USHRT./ushrt./JE.|coin./GUP.|bbar.|section.%% "A0--
+  /YO.|cp./IE.|LG.|lnot.|shy.|reg./YI.%% --"AF
+  |deg.|pm./II./ii./gup.|mu.|par.|cdot.%% "B0--
+  /yo.|No./ie.|RG./je./DZE./dze./yi.%% --"BF
+  /A./B./V./G./D./E./ZH./Z.%% "C0--
+  /I./ISHRT./K./L./M./N./O./P.%% --"CF
+  /R./S./T./U./F./H./C./CH.%% "D0--
+  /SH./SHCH./HRDSN./ERY./SFTSN./EREV./YU./YA.%% --"DF
+  /a./b./v./g./d./e./zh./z.%% "E0--
+  /i./ishrt./k./l./m./n./o./p.%% --"EF
+  /r./s./t./u./f./h./c./ch.%% "F0--
+  /sh./shch./hrdsn./ery./sftsn./erev./yu./ya.%% --"FF
+  }
+  %
+
+
+ %%%%%%% KoiEncoding "universal version"
+  %% LaTeX Tag: koi8-u
+  %% Comment: Russian, Byelorussian, Ukrainian
+  %%+ Devised for Internet use, 1993.
+  %%+ -u means 'unified'(?)
+ \def\KoiEncodingVect@{%
+  \.\.\.\.\.\.\.\.%% "80--
+  \.\.\.\.\.\.\.\.%% --"8F
+  \.|lq.\apos.|LQ.|RQ.|bullet.|endash.|emdash.%% "90--
+  |cp.|tm.|nbsp.|RG.|reg.|LG.|cdot.|coin.%% --"9F
+  |nbsp./tsje./gup./yo./ie./dze./ii./yi.%% "A0--
+  /je./lje./nje./dje./kje./gup./ushrt./dzhe.%% --"AF
+  |No./TSJE./GUP./YO./IE./DZE./II./YI.%% "B0--
+  /JE./LJE./NJE./DJE./KJE./GUP./USHRT./DZHE.%% --"BF
+  /yu./a./b./c./d./e./f./g.%% "C0--
+  /h./i./ishrt./k./l./m./n./o.%% --"CF
+  /p./ya./r./s./t./u./zh./v.%% "D0--
+  /sftsn./ery./z./sh./erev./shch./ch./hrdsn.%% --"DF
+  /YU./A./B./C./D./E./F./G.%% "E0--
+  /H./I./ISHRT./K./L./M./N./O.%% --"EF
+  /P./YA./R./S./T./U./ZH./V.%% "F0--
+  /SFTSN./ERY./Z./SH./EREV./SHCH./CH./HRDSN.%% --"FF
+  }
+
+
+ %%%%%%% NullEncoding
+  %%
+ \def\NullEncodingVect@{%
+  \.\.\.\.\.\.\.\.%% "80--
+  \.\.\.\.\.\.\.\.%% --"8F
+  \.\.\.\.\.\.\.\.%% "90--
+  \.\.\.\.\.\.\.\.%% --"9F
+  \.\.\.\.\.\.\.\.%% "A0--
+  \.\.\.\.\.\.\.\.%% --"AF
+  \.\.\.\.\.\.\.\.%% "B0--
+  \.\.\.\.\.\.\.\.%% --"BF
+  \.\.\.\.\.\.\.\.%% "C0--
+  \.\.\.\.\.\.\.\.%% --"CF
+  \.\.\.\.\.\.\.\.%% "D0--
+  \.\.\.\.\.\.\.\.%% --"DF
+  \.\.\.\.\.\.\.\.%% "E0--
+  \.\.\.\.\.\.\.\.%% --"EF
+  \.\.\.\.\.\.\.\.%% "F0--
+  \.\.\.\.\.\.\.\.%% --"FF
+  }
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\HiOctetsCat@{13}
+
+\def\HighActiveOctetsHolder@{%
+ /^^80 80 /^^81 81 /^^82 82 /^^83 83 /^^84 84 /^^85 85 /^^86 86 %
+ /^^87 87 /^^88 88 /^^89 89 /^^8a 8a /^^8b 8b /^^8c 8c /^^8d 8d %
+ /^^8e 8e /^^8f 8f /^^90 90 /^^91 91 /^^92 92 /^^93 93 /^^94 94 %
+ /^^95 95 /^^96 96 /^^97 97 /^^98 98 /^^99 99 /^^9a 9a /^^9b 9b %
+ /^^9c 9c /^^9d 9d /^^9e 9e /^^9f 9f /^^a0 a0 /^^a1 a1 /^^a2 a2 %
+ /^^a3 a3 /^^a4 a4 /^^a5 a5 /^^a6 a6 /^^a7 a7 /^^a8 a8 /^^a9 a9 %
+ /^^aa aa /^^ab ab /^^ac ac /^^ad ad /^^ae ae /^^af af /^^b0 b0 %
+ /^^b1 b1 /^^b2 b2 /^^b3 b3 /^^b4 b4 /^^b5 b5 /^^b6 b6 /^^b7 b7 %
+ /^^b8 b8 /^^b9 b9 /^^ba ba /^^bb bb /^^bc bc /^^bd bd /^^be be %
+ /^^bf bf /^^c0 c0 /^^c1 c1 /^^c2 c2 /^^c3 c3 /^^c4 c4 /^^c5 c5 %
+ /^^c6 c6 /^^c7 c7 /^^c8 c8 /^^c9 c9 /^^ca ca /^^cb cb /^^cc cc %
+ /^^cd cd /^^ce ce /^^cf cf /^^d0 d0 /^^d1 d1 /^^d2 d2 /^^d3 d3 %
+ /^^d4 d4 /^^d5 d5 /^^d6 d6 /^^d7 d7 /^^d8 d8 /^^d9 d9 /^^da da %
+ /^^db db /^^dc dc /^^dd dd /^^de de /^^df df /^^e0 e0 /^^e1 e1 %
+ /^^e2 e2 /^^e3 e3 /^^e4 e4 /^^e5 e5 /^^e6 e6 /^^e7 e7 /^^e8 e8 %
+ /^^e9 e9 /^^ea ea /^^eb eb /^^ec ec /^^ed ed /^^ee ee /^^ef ef %
+ /^^f0 f0 /^^f1 f1 /^^f2 f2 /^^f3 f3 /^^f4 f4 /^^f5 f5 /^^f6 f6 %
+ /^^f7 f7 /^^f8 f8 /^^f9 f9 /^^fa fa /^^fb fb /^^fc fc /^^fd fd %
+ /^^fe fe /^^ff ff }%% watch space before brace
+
+%%% (what about CR and linefeed?)
+
+\begingroup
+
+ \LowOctetsCat@{13}%% localized
+
+ %\global\let^^0c=\relax   %% Textures? Plain?; poluting??
+ \let^^0c=\relax   %% localized
+
+ \gdef\LowActiveOctetsHolder@{%% watch gdef; will cleanup after
+  /^^00 00 /^^01 01 /^^02 02 /^^03 03 /^^04 04 /^^05 05 /^^06 06 %
+  /^^07 07 /^^08 08 /^^09 09 /^^0a 0a /^^0b 0b /^^0c 0c /^^0d 0d %
+  /^^0e 0e /^^0f 0f /^^10 10 /^^11 11 /^^12 12 /^^13 13 /^^14 14 %
+  /^^15 15 /^^16 16 /^^17 17 /^^18 18 /^^19 19 /^^1a 1a /^^1b 1b %
+  /^^1c 1c /^^1d 1d /^^1e 1e /^^1f 1f /^^7f 7f }
+
+ \endgroup
+ \let^^0c=\relax %% was \par for Textures
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%        TRANSLATION MACROS         %%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ %%%%% Make sure chars >= 127 are ordinary  (lccodes = 0)
+  %%%% This is default maybe to be changed
+ \def\HiOctetsZeroLCcodes@{%
+  \count255=128\relax
+  \Loop@
+   \lccode\count255=0\relax
+   \advance\count255 by 1\relax
+  \ifnum
+   \count255<256\relax
+  \Repeat@
+  }
+
+
+ %%%%% \PrepMoreLiveAccIn@
+   %% is one of two:
+ \def\PrepMoreLiveAccIn@{% maybe < and >
+   %%% \maybe@excl##1 : is tag active-alpha ??
+   \def\maybe@excl##1{%
+     \ifnum \lccode`##1>0 \@e
+       \ex@\@excl\ex@##1%% DON'T put tracer (...) on this line!
+     \else
+       \ex@##1%% nor this line --- because of macro soiling
+     \fi}
+     %
+   \lccode`.=`\}%
+   %%% \CyrLetter@##1:  <diactag> --> \TO_ or puke
+   \lowercase{\def\CyrLetter@##1.{%
+     \ex@\ifx\cs@ to_\maybe@excl##1^^A\ecs@\relax
+     \(CyrLetter@_cont)'\lbrace@\CyrUniv@@##1.%
+     \else
+     \(CyrLetter@_bingo)\ex@\ex@\cs@ to_\maybe@excl##1^^A\ecs@
+     %% \(CyrDiac@_bingo)
+     \fi}}%%
+   \lccode`.=0%
+   %\show\CyrLetter@
+    %
+  %%% \CyrDiac@##1:  <diactag> --> \TO_ or puke
+   \def\CyrDiac@##1]{%
+     \ex@\ifx\cs@ TO_\maybe@excl##1^^A\ecs@\relax
+     \(CyrDiac@_cont)'[\CyrUniv@@##1]%
+     \else
+     \(CyrDiac@_bingo)\ex@\ex@\cs@ TO_\maybe@excl##1^^A\ecs@
+     %% \(CyrDiac@_bingo)
+     \fi}%
+    %
+   %%% \CyrUniv@@##1 : second depth
+   \def\CyrUniv@@##1{%
+     \ifnum \lccode`##1>0 \@e
+       \(CyrUniv@@_lc)\string##1\ex@\@c@excl %%
+     \else
+       \ifx##1\@Excl
+         \(CyrUniv@@_e)\ex@\ex@\ex@\CyrUniv@@excl
+       \else
+         \(CyrUniv@@_o)\ex@\ex@\ex@##1%
+       \fi
+     \fi}
+     %
+   %%% \CyrUniv@@excl##1 : third depth
+   \def\CyrUniv@@excl##1{%
+    \ifnum \lccode`##1>0 \@e
+        \(CyrUniv@@excl_lc)\ex@ ##1%% do buggerall%%
+    \else
+       \ifx##1\@Excl
+         \(CyrUniv@@excl_Excl)\string!%% (@bs@excl_Excl)
+       \else
+         \if\noexpand ##1\string_%
+           \(CyrUniv@@excl_h)\ExpThriceAfter@\@@UlnCheck %%
+         \else
+           \(CyrUniv@@excl_o)\string!\ExpThriceAfter@ ##1%%
+         \fi
+       \fi
+    \fi
+    }%
+    %
+   \uccode`<=`<
+   \ex@\edef\cs@ so_'<\ecs@{\cs@ TO_LG\ecs@}%
+   \uccode`>=`>
+   \ex@\edef\cs@ so_'>\ecs@{\cs@ TO_RG\ecs@}%
+   \uccode`N=`N
+   \ex@\edef\cs@ so_'N\ecs@{\cs@ TO_No\ecs@}%
+   %
+   %%% Define \TO_"
+    %% Wanted the '["] --> (exp of) \TO_RQ, but table
+    %% only gave TS_
+   \ex@\ifx\cs@ TO_RQ\ecs@\relax
+     \ex@\edef\cs@ TO_"\ecs@{'["]}%
+   \else
+     \ex@\edef\cs@ TO_"\ecs@{\cs@ TO_RQ\ecs@}%
+   \fi
+   %\ex@\show\cs@ TO_"\ecs@
+   %
+   %%% Following are crucial and delicate matters
+   \uccode`\{=`\{
+   \ex@\let\cs@ so_'\lbrace@\ecs@\CyrLetter@
+    %% \so_<lbrace>#1=\CyrLetter@#1
+   \uccode`\[=`\[
+   \ex@\let\cs@ so_'[\ecs@\CyrDiac@ %
+   \ex@\def\cs@ so_''\ecs@{'}%
+   %
+   }%
+
+
+ \def\PrepMoreLiveRuAccIn@{%
+   \PrepMoreLiveAccIn@
+   %%% Following for rq-APOS confluence (Russian)
+    %% Here we know APOS has no short form
+   %\ex@\show\cs@ to_APOS\ecs@
+   %\ex@\show\cs@ TO_rq\ecs@
+   \ex@
+   \ifx\cs@ TO_rq\ecs@\relax
+   \else\ex@
+     \ifx\cs@ to_APOS\ecs@\relax %% is def needed?
+       \ex@\edef\cs@ to_APOS\ecs@{\cs@ TO_rq\ecs@}%
+       \ex@\edef\cs@ to_apos\ecs@{\cs@ TO_rq\ecs@}%
+     \fi
+   \fi
+   %\ex@\show\cs@ to_APOS\ecs@
+   %\ex@\show\cs@ to_apos\ecs@
+   }
+
+   %\iwr@{}%
+   %\iwr@{ temp@=\temp@}%
+   %\iwr@{temp@@=\temp@@}%
+   %\iwr@{}%
+   %\show\temp@
+   %\show\temp@@
+   %\read16 to \Junk
+   %\def\temp@@{'[rq]}%
+
+ \def\PrepMoreLiveUkrAccIn@{%
+   \PrepMoreLiveAccIn@
+   \uccode`*=`*
+   %%% Following for rq-APOS confluence (Ukr)
+   %\ex@\show\cs@ to_APOS\ecs@
+   %\ex@\show\cs@ TO_rq\ecs@
+   \ex@\let\ex@\temp@\cs@ TO_rq\ecs@
+   \ifx\temp@\relax
+     \else %%
+     \ex@\let\ex@\temp@\cs@ to_APOS\ecs@
+     \edef\temp@@{'\lbrace@ APOS\rbrace@}
+     \ifx\temp@\temp@@
+       \ex@\edef\cs@ to_APOS\ecs@{\cs@ TO_rq\ecs@}%
+       \ex@\edef\cs@ to_apos\ecs@{\cs@ TO_rq\ecs@}%
+     \fi
+   \fi
+   %\ex@\show\cs@ to_APOS\ecs@
+   %\ex@\show\cs@ to_apos\ecs@
+   %%%%% Set \so_'*, \to_apos, \to_APOS, to \TO_rq
+      %% when nothing better available
+   %% \so_'* --> \to_apos   by \@SetAccInShorts
+   %\ex@\show\cs@ so_'*\ecs@
+   \ex@\edef\cs@ so_'*\ecs@{\cs@ to_apos\ecs@}%
+   }%
+
+ %%%%% Define category 12 braces
+ \lccode `\.=123\relax\lowercase{\def\lbrace@{.}}%
+ \lccode `\.=125\relax\lowercase{\def\rbrace@{.}}%
+ \lccode `\.=0\relax
+
+  %%%%% \@SetHighAccess
+   %% \c_128 etc. will be the ACTIVE char
+   %% \h_128 etc. will be lc hex value thereof
+  \def\@SetHighAccess{%
+   \def/##1 ##2 {\chardef\byte=`##1\relax
+     \let##1\relax %% preliminary for edef protection
+     \edef\temp@{\the\byte}%
+     \ex@\def\cs@ da_\temp@\ecs@{##1}%%
+      %% da_ for \the\byte ==> active character
+     \ex@\def\cs@ do_\temp@\ecs@{\string##1}%%
+      %% do_ for \the\byte ==> cat 12 char
+     \ex@\def\cs@ dh_\temp@\ecs@{##2}}%%
+      %% dh_ for \the\byte ==> lc hex string
+   \HighActiveOctetsHolder@
+   }
+
+ %%%%% \@HiOctetUkrLigOutDefs %% 8 to 7
+ %% \TheEightbitEncodingVect@ is typically \DosEncodingVect@
+ \def\@HiOctetUkrLigOutDefs{%
+   %%% Auxilliary tools for high octets:
+   \@SetLigShorts
+      %% \ts_<LaTeX letter Tag> --> short ASCII %% r-to-s
+      %% sets some \cs@ ts_<tag>\ecs@ to ASCII char, or ' and that
+      %% for example \_shch --> 'w
+   \@SetHighAccess  %% \da_<decimal> --> active high octet
+   \@SetDiacShorts
+   %%% Defs of active char values '{...} '[...]  !__xy  and Acc shorts
+   %% /##1. %% where ##1 is LaTeX letter Tag
+   %% letter high active octet code \the\count255 -->
+   %%  \ts_<LaTeX letter Tag> if it exists  or  '{<LaTeX letter Tag>}
+   %%% for letters
+   %% \ta_<LaTeX letter Tag> --> active high octet %% r-to-a
+   %% \ot_<other high octet> --> <LaTeX letter Tag> %% o-to-r
+   %
+   \def/##1.{\ex@\let\ex@\temp@\cs@ ts_##1\ecs@
+    \ifx\temp@\relax
+       \ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@{\lbrace@ ##1\rbrace@}%
+    \else
+     \ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@{\temp@}%
+     %% Here we know we have letter
+     %% with a short form \ts_<LaTeX letter Tag>
+     %% For Ukr context modif preps
+     %% need ability to access active octets of
+     %% \CYRIE,\cyrie,\CYRYI,\cyryi,\CYRISHRT,\cyrishrt
+     %% for example \ta_IE --> the active octet giving IE
+     %% so prepare this access for all shorts:
+     \edef\temp@{\ex@\ex@\ex@\ne@\cs@ da_\the\count255\ecs@}%
+     %\show\temp@
+     \ex@\let\cs@ ta_##1\ecs@\temp@ %%% defines \ta_<LaTeX letter Tag>
+     \edef\temp@{\ex@\string\temp@}%% the cat other octet
+     %\show\temp@
+     %% Want LaTeX letter Tag of octet when it exists, else \relax
+     \ex@\edef\cs@ ot_\temp@\ecs@{##1}%
+     %\ex@\show\cs@ ot_\temp@\ecs@
+    \fi
+    \advance\count255 by 1\relax}
+   %% |##1. %% where ##1 is my short tex diacritic tag for email-ru.tex
+   %% defines \da_<\the\count255> = <active high octet> --> or Acc short
+   \def|##1.{%
+      %% Here we know we have diacritic with a short form \TS_##1
+      %% For Ukr context modif preps need ability to
+      %% define active octets of these
+      %% for example \TA_LQ --> (the active octet '[LQ])
+      %% so prepare this access for all high diacritics:
+      \edef\temp@{\cs@ da_\the\count255\ecs@}
+        %% value is active high octet, still equal \relax
+      \ex@\edef\cs@ TA_##1\ecs@{\temp@}%% defines \TA_<my diac tag>
+      \ex@\edef\cs@ OT_\ex@\string\temp@\ecs@{##1}%
+        %% defines \OT_<my diac other octet>
+      %%%% *finally* the active high octet
+        %% value changes from \relax to [\TS_##1]
+      \ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@
+                {[\cs@ TS_##1\ecs@]\ne@\UkrWB@}%
+      \advance\count255 by 1\relax}
+   %% \. sets the active high octet equal to !__xy where "XY=\count255
+   \def\.{\ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@{%
+            !\string_\string_\cs@ dh_\the\count255\ecs@}%%
+          %% in short \def ^^xy{the string !__xy}
+         \advance\count255 by 1\relax}
+   %
+   %%%% \apos. just means |rq. as far as Ukr Translit concerned
+   %\def\APOS.{|rq.}%
+   \def\apos.{|rq.}%
+   %
+   \count 255=128\relax
+   %\show\TheEightbitEncodingVect@
+   \TheEightbitEncodingVect@
+   %% finally prevent softhyphen catalyzing:
+   \ex@\ex@\ex@\edef\cs@ TA_shy\ecs@{[\cs@ TS_shy\ecs@]}
+   }
+
+ %%%%% \@HiOctetRuLigOutDefs %% 8 to 7 %% use comments for Ukr
+ \def\@HiOctetRuLigOutDefs{%
+   %%%% Auxilliary tools for high octets:
+   \@SetLigShorts
+   \@SetHighAccess  %% \da_<decimal> --> active high octet
+   \@SetDiacShorts
+   %%%% /##1.
+   \def/##1.{\ex@\let\ex@\temp@\cs@ ts_##1\ecs@
+     \ifx\temp@\relax
+       \ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@{\lbrace@ ##1\rbrace@}%
+     \else
+       \ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@{\temp@}%
+     \fi
+     \advance\count255 by 1\relax}
+   %%%% |##1.
+   %% defines \da_<\the\count255> = <active high octet> --> or Acc short
+   \def|##1.{%
+       \ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@{[\cs@ TS_##1\ecs@]}%
+       \advance\count255 by 1\relax}
+   %%%% \. sets the active high octet equal to !__xy where "XY=\count255
+   \def\.{\ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@{%
+            !\string_\string_\cs@ dh_\the\count255\ecs@}%%
+          %% in short \def ^^xy{the string !__xy}
+         \advance\count255 by 1\relax}
+   %
+   %%%% \apos. just means |rq. for now 26-11-00
+   \def\apos.{|rq.}
+   %
+   \count 255=128\relax
+   \TheEightbitEncodingVect@
+   }
+
+ %%%%% \@HiOctetAccOutDefs %% 8 to 7
+ %% \TheEightbitEncodingVect@ is typically \DosEncodingVect@
+ \def\@HiOctetAccOutDefs{%
+   %%% Auxilliary tools for high octets:
+   \@SetAccOutShorts
+      %% sets some \cs@ ts_<tag>\ecs@ to ASCII char, or ' and that
+      %% for example \_shch --> 'w
+   \@SetHighAccess
+   \@SetDiacShorts
+   %\ex@\show\cs@[lg]\ecs@
+   %%%% Defs of active char values '{...} '[...]  !__xy  and Acc shorts
+   %%% /##1. sets the active high octet equal to '{##1} or Acc short
+   \def/##1.{\ex@\let\ex@\temp@\cs@ ts_##1\ecs@
+     \ifx\temp@\relax
+        \ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@
+           {'\lbrace@ ##1\rbrace@}%
+     \else
+       \ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@{\temp@}%
+     \fi
+     \advance\count255 by 1\relax}%
+   %%% |##1. active high octet --> '[\TS_##1] or Acc short
+   \def|##1.{\ex@\let\ex@\temp@\cs@ ts_##1\ecs@ %% why this 24-11-00?
+       \ifx\temp@\relax
+          \ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@
+               {'[\cs@ TS_##1\ecs@]}%
+       \else
+          \ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@{\temp@}%
+       \fi
+       \advance\count255 by 1\relax}%
+   %%% \. sets the active high octet equal to !__xy where "XY=\count255
+   \def\.{\ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@{%
+            '\string_\string_\cs@ dh_\the\count255\ecs@}%
+            %% in short \def ^^xy{'__xy}
+            \advance\count255 by 1\relax}
+   %%% \apos. sets the active high octet equal to '* for Ukr
+    %% and otherwise to '[']
+   \def\apos.{%
+     \ex@\let\ex@\temp@\cs@ ts_apos\ecs@%
+     %\show\temp@ % normally '* (Ukr) or \relax (Ru)
+     \ifx\temp@\relax
+       \ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@{'[\cs@ TS_rq\ecs@]}%
+     \else
+       \ex@\ex@\ex@\edef\cs@ da_\the\count255\ecs@{\temp@}%
+     \fi
+     \advance\count255 by 1\relax}%
+   \count 255=128\relax
+   \TheEightbitEncodingVect@
+   }
+
+
+  %%%%%% \@HiOctetsAccInDefs %% 7 to 8
+  %% extracts all useful info from the
+  %% \TheEightbitEncodingVect@ which is typically \DosEncodingVect@
+  %% it will be (other high octet) valued functions:
+  %% \so_<7short>, \to_<latextag>,
+  %% \TO_<7short>, \TO_<mydiactag>, \ho_<hextag>
+ \def\@HiOctetsAccInDefs{%
+  %%%%% Extract info from \TheEightbitEncodingVect@
+   %%%% Auxilliary tools for high octets: (all are used)
+   \@SetHighAccess
+    %% \do_<decimal> --> <8other> **,  \dh_<decimal> --> <hex> **
+   \@SetAccInShortsA %% \so_<tag> --> '{<tag>} as default
+         %% \ts_<tag> --> <7short>, eg. \ts_shch --> 'w **
+   \@SetDiacShorts %% \TS_<tag> --> <7short> **
+   %\@IdentifyAccInLetterTags %% \te_<tag> --> \@e when char "known"
+    %\ex@\show\cs@ te_gje\ecs@
+    %%%% \Set@ho and \The@o used thrice below,
+     %% defines \ho_<hex> --> cat 12 octet
+   \def\The@o{\cs@ do_\the\count255\ecs@}%
+   \def\Set@ho{\edef\The@hex{\cs@ dh_\the\count255\ecs@}%
+      \ex@\edef\cs@ ho_\The@hex\ecs@{\The@o}}%
+   %%%% \.   Surely \ho_xy --> ^^xy where "XY=\count255
+   \def\.{\Set@ho \advance\count255 by 1\relax}%
+   %%%% /##1. where ##1 is <tag> = LaTeX cyrillic letter tag
+   \def/##1.{\Set@ho
+      %%% maybe \so_<7short> --> other high octet
+       \ex@\ifx\cs@ ts_##1\ecs@\relax
+       \else
+          \edef\temp@{\cs@ ts_##1\ecs@}
+          \ex@\edef\cs@ so_\temp@\ecs@{\The@o}%
+       \fi
+      %%% surely \to_<tag> --> other high octet
+       \ex@\edef\cs@ to_##1\ecs@{\The@o}%
+       \advance\count255 by 1\relax}%
+   %%%% |##1. where ##1 is <tag> = my tex diac tag
+   %%%xxx REVISE to elim TS_ and \@SetDiacShorts
+   %%%xxx and also diac table anomaly re '["]
+   \def|##1.{\Set@ho
+      %%% surely \TO_<7short> --> other high octet
+          \ex@\edef\cs@ TO_##1\ecs@{\The@o}%
+          \edef\temp@{\cs@ TS_##1\ecs@}
+          \ex@\edef\cs@ TO_\temp@\ecs@{\The@o}%
+      %%% surely \TO_<tag> --> other high octet
+       \ex@\edef\cs@ TO_##1\ecs@{\The@o}%
+       \advance\count255 by 1\relax }%
+   %
+   %%%% \apos. just means |rq. for now 26-11-00
+    \def\apos.{|rq.}
+   %
+   \count255=128\relax
+   \TheEightbitEncodingVect@
+   %
+     %%%%% Define active English letter A --> \so_A
+       %% and 'A --> '\so_A  if nothing better
+    \def/##1{\lccode`\~=`##1
+        \lowercase{\edef~}{\cs@ so_##1\ecs@}%
+        \ex@\ifx\cs@ so_'##1\ecs@\relax
+           \ex@\edef\cs@ so_'##1\ecs@{'\cs@ so_##1\ecs@}%
+        \fi}
+    \LatinLettersholder@
+    \@SetAccInShortsB %% \so_'g ==> edef exp of \to_gup etc
+   }
+
+ %%%%%% \StrangeLowOctetsToCaskets@ %%%%% correct for CR & LF??
+  %
+ \edef\OctetCasket@#1 #2 {\edef#1{\string!\string_\string_#2}}%
+  %%\OctetCasket@^^ff ff --> {the string !__ff}
+ \def\StrangeLowOctetsToCaskets@{%
+  \let/\OctetCasket@
+  \LowActiveOctetsHolder@
+   %% \HighActiveOctetsHolder@ handled otherwise
+   }
+
+ %%%%%% \StrangeOctetResurections@ %%%%% correct for CR & LF??
+  %% unnecessary now
+  %%%% \cs@!xy\ecs@ gives resurected octet __xy
+ \def\OctetResurection@#1 #2 {%
+  \ex@\edef\cs@ ho_#2\ecs@{\string#1}%
+  %\ex@\show\cs@ ho_#2\ecs@
+  }
+ \def\StrangeOctetResurections@{%
+  \let/\OctetResurection@
+  \LowActiveOctetsHolder@
+  }
+
+%%%%%% \@IsDigitHolder \@IsDigitDefs
+ %
+\def\HexDigitsHolder@{/0/1/2/3/4/5/6/7/8/9/a/b/c/d/e/f}
+ %
+ \def\@IsDigit{0}%
+ \def\@IsDigitDefs{%
+  \def/##1{\ex@\def\cs@ x_##1\ecs@{0}}% %% 0 is sign of digit
+  \HexDigitsHolder@}
+
+ \def\LatinLettersholder@{%% cat is *letter* here
+  /A/B/C/D/E/F/G/H/I/J/K/L/M/N/O/P/Q/R/S/T/U/V/W/X/Y/Z%
+  /a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z%
+   }%
+
+ %%%%%% \LatinLetterActiveAccOutDefs@
+    %%% for AccOut currently
+ \let\pEng@=\relax %% initial
+ \def\LatinLetterActiveAccOutDef@#1{%
+  \lccode`\~=`#1\relax\lccode`a=`#1\relax
+  \lowercase{\edef~{\pEng@ a}}}%
+ %
+ \def\LatinLetterActiveAccOutDefs@{%
+  \let/\LatinLetterActiveAccOutDef@
+  \LatinLettersholder@
+  \lccode`\~=0 \lccode`a=`a%% restorative measure
+  }%
+
+ %%%%%% \ActiveUkrLigOutDefs@
+  %%% for context sensitive, official Ukr lig transliteration
+ \def\ActiveUkrLigOutDefs@{%
+   \lccode`\~=13\relax
+   \lowercase{\let~\UkrLigOutEndLine@}%% it edefs to empty
+   %%%% \UkrWB@  Word-Beginning catalysis
+    %% High diacritics have \UkrWB@ catalytic
+    %% postfix by \@HiOctetUkrLigOutDefs
+   %%% ASCII chars 32--126 will have
+    %% \UkrWB@ catalytic postfix iff active
+   %% But just some diacritics will be activated by
+   %\lccode`\~=`\-\relax
+   %\lowercase{\def~{-\UkrWB@}}%
+   \count255=32\relax
+   \Loop@
+     \lccode`\~=\count255\relax
+     \lowercase{\edef~{\string~\ne@\UkrWB@}}%
+     \advance\count255 by 1\relax
+   \ifnum\count255>126\relax\else
+   \Repeat@
+   \lccode`\~=0\relax %% restorative
+   %%% \UkrWBShift@{##1}{##2}%
+    %% {LaTeX Tag}{Word Beginning transliteration}
+   \def\UkrWBShift@##1##2{%
+     \edef\temp@{\ex@\ex@\ex@\string\cs@ ta_##1\ecs@}%
+        %% cat other, high octet
+     %\show\temp@
+     \ex@\edef\cs@ wb_\temp@\ecs@{##2}%
+     %% ##2 is the catalyzed character(s), cat other, ASCII
+     %\ex@\show\cs@ wb_\temp@\ecs@
+     %% It serves in place of \ts_##1
+    }%
+   \UkrWBShift@{IE}{Ye}%
+   \UkrWBShift@{ie}{ye}%
+   \UkrWBShift@{YI}{Yi}%
+   \UkrWBShift@{yi}{yi}%
+   \UkrWBShift@{ISHRT}{Y}%
+   \UkrWBShift@{ishrt}{y}%
+   \UkrWBShift@{YU}{Yu}%
+   \UkrWBShift@{yu}{yu}%
+   \UkrWBShift@{YA}{Ya}%
+   \UkrWBShift@{ya}{ya}%
+   \def\UkrWB@##1{%
+     %% ##1 is a token and the interesting case is when it is
+     %% one of the 8 active chars \c_IE,...,\c_ya
+     \ex@\ifx\cs@ wb_\string##1\ecs@ \relax
+        %% if a context transformation is NOT defined
+       \ex@##1%
+     \else
+       \cs@ wb_\string##1\ecs@ %% dangerous but OK?
+     \fi
+     }%
+   %%% Post-Z catalysis:
+    %% \CYRZ\CYRG ==> ZGH, \CYRZ\cyrg ==> Zgh, \cyrz\cyrg ==> zgh
+    %%
+   \edef\temp@{\let\ne@\Ukr@G=\ex@\ex@\ex@\ne@\cs@ ta_G\ecs@}\temp@
+   \edef\temp@{\let\ne@\Ukr@g=\ex@\ex@\ex@\ne@\cs@ ta_g\ecs@}\temp@
+   %%\Ukr@G is expansion of \ta_G
+   %%\Ukr@g is expansion of \ta_g
+   \def\AfterUkrZorz@ ##1{%% checks for G,g ==> GH, gh
+     %(AfterUkrZorz@)
+     \ifx##1\Ukr@G
+       GH%
+     \else
+       \ifx##1\Ukr@g
+         gh%
+       \else
+         %(neither ta_G nor ta_g)%
+         \ex@\ex@\ex@##1%
+       \fi
+     \fi
+    }%
+   \ex@\ex@\ex@\def\cs@ ta_Z\ecs@{Z\AfterUkrZorz@}%
+   \ex@\ex@\ex@\def\cs@ ta_z\ecs@{z\AfterUkrZorz@}%
+   }
+
+ %%%%%% \ActiveRuLigOutDefs@
+  \let\ActiveRuLigOutDefs@\relax%
+
+ %%%%%% \PrimableTestPrep@
+    %% to help decide whether prime in 8-bit file should double
+    %% depends on whether following char (when char)
+    %% decision in \def\pr@
+    %%% N.B. More than Latin letters are primable
+  \def\PrimableTestPrep@{%
+   \def/##1{\uccode`##1=1}%
+       %% uccode=1 means *potentially* primable to us
+   \LatinLettersholder@/</>/*/[\ex@/\lbrace@ %
+    %% < > * cause all the fuss; others later??
+   }
+
+ %%%%%% \PrepFlagsAccOut@
+  %
+  \def\PrepFlagsAccOut@{%
+  \let\pEng@=\relax
+    %% English letter flag from \LatinLetterActiveAccOutDefs@
+  \let\pExcl@=\relax %% from active !
+  \let\pBs@=\relax %% from active \
+  \let\pPr@=\relax %% from active '
+  \let\pCR@=\relax %% from active ^^M as \endlinechar
+  %% initial
+  \lccode`\~=`\\\relax%% makes active \ -->  \pBs@
+  \lowercase{\def~{\pBs@}}%
+  \lccode`\~=`!\relax%% makes active ! -->  \pExcl@
+  \lowercase{\def~{\pExcl@}}%
+  \lccode`\~=`\'\relax%% makes active ' -->  \pPr@
+  \lowercase{\def~{\pPr@}}%
+  \lccode`\~=9\relax%% makes active ^^09 --> !^^09 (string)
+  \lowercase{\edef~{\string!\string_\string_09}}%
+  \lccode`\~=13\relax%% makes active ^^0d = !^^0d (string)
+  \lowercase{\def~{\pCR@}}%
+  }%
+
+ %%%%%% \PrepFlagsAccIn@ for
+  %
+  \def\PrepFlagsAccIn@{%
+  \lccode`\~=`\\\relax%% makes active \ -->  \@Bs
+  \lowercase{\let~\@Bs}%
+  \lccode`\~=`!\relax%% makes active ! -->  \@Excl
+  \lowercase{\let~\@Excl}%
+  \lccode`\~=`\'\relax%% makes active ' -->  \@Acc
+  \lowercase{\let~\@Acc}%
+  \lccode`\~=13\relax%% makes active ^^0d = \@EndLine (string)
+  \lowercase{\let~\@e}%
+  \let ^^A=\@e
+  }%
+
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%        TransSetup         %%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ %%%%%% \TransSetupAccIn@ (8 out)
+ \def\TransSetupAccIn@{%
+   \HiOctetsZeroLCcodes@ %% default to change
+   \@HiOctetsAccInDefs
+   \ThePrepMoreLiveAccIn@
+      %% This one is \PrepMoreLiveRuAccIn@ or \PrepMoreLiveUkrAccIn@
+   \StrangeOctetResurections@
+   \PrepFlagsAccIn@
+   \endlinechar=13
+   %\show^^A
+  }
+
+
+ %%%%% \TransSetupAccOut@  (7 out)
+ \def\TransSetupAccOut@{%
+   \StrangeLowOctetsToCaskets@
+   \@HiOctetAccOutDefs
+      %% high octet to tag short or '{??} or '[??] or !__xy
+      %%\ex@\show\cs@ ts_APOS\ecs@
+   \LatinLetterActiveAccOutDefs@
+   \PrimableTestPrep@ %% to make \IFnextprimable@ work
+   \PrepFlagsAccOut@
+   \endlinechar=13 % will change later
+   }
+
+ %%%%% \TransSetupLigOut@
+ \def\TransSetupLigOut@{%
+   \StrangeLowOctetsToCaskets@
+   \@HiOctetLigOutDefs
+     %% is \@HiOctetRuLigOutDefs  or  \@HiOctetUkrLigOutDefs
+   \ActiveLigOutDefs@ %% \relax or \ActiveUkrLigOutDefs@
+   \endlinechar=-1\relax
+   }
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%         CategorySetup         %%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ %%%%% \CategorySetup@ best done as a predefined macro
+  %% to avoid self-ref problems
+
+ %%%%%% \ActivateLatinLetters@
+ \def\ActivateLatinLetters@{%
+  %\showthe\catcode`\/
+  \def/##1{\catcode`##1=13\relax}%
+  \LatinLettersholder@
+  }
+
+ %%%%% \MakeSpecialsOther@
+  %% Dangerous/exotic lower ascii become "other"
+ \def\MakeSpecialsOther@{%
+  \catcode9=13 %% tab
+  %%\catcode13=12 %% CR, just char absorb file at once? No
+  \catcode32=12 %% space to preserve multiple spaces
+  \catcode`\#=12
+  \catcode`\$=12
+  \catcode`\%=12
+  \catcode`\&=12
+  \catcode`\'=12 %% will often undo this
+  \catcode`\/=12
+  \catcode`\@=12
+  \catcode`\\=12 %% will often undo this
+  \catcode`\^=12
+  \catcode`\_=12
+  \catcode`\`=12
+  \catcode`\{=12
+  \catcode`\|=12
+  \catcode`\}=12
+  \catcode`\~=12
+  }
+
+ %%%% \MakeAsciiOther@
+ \def\MakeAsciiOther@{%
+  \count255=0 %
+  \Loop@
+    \catcode\count255=12\relax
+    \advance\count255 by 1\relax
+  \ifnum \count255< 128\relax
+  \Repeat@
+ }
+
+ %%%% \ActivateFlagChars@
+ \def\ActivateFlagChars@{%
+    \catcode`\'=13
+    \catcode`\!=13
+    \catcode`\\=13
+    \catcode13=13
+    }
+
+ %%%% \UkrLigContextActivations@
+   %% space, - and other non-letters
+ \def\UkrLigContextActivations@{%
+  \catcode13=13 %% CR
+  %\showthe\lccode`\.%
+   \count255=32\relax
+   \Loop@
+     \ifnum\lccode\count255=0\relax %% nonletters activated
+       \catcode\count255=13\relax
+     \fi
+     \advance\count255 by 1\relax
+   \ifnum\count255>126\relax\else
+   \Repeat@
+  %\def/##1{\catcode`##1=12\relax}\LatinLettersholder@
+  }
+
+  %%%% \RuLigContextActivations@
+  \let\RuLigContextActivations@\relax
+
+ \def\CategorySetupAccIn@{%
+  \LowOctetsCat@{15}%%
+  \catcode9=12\catcode10=12\relax %\catcode13=12 %% moderates above
+  \HiOctetsCat@{15}% %% to prevent disasters.
+  \MakeSpecialsOther@
+  \ActivateLatinLetters@ %% also done in AccOut direction
+  \ActivateFlagChars@ %% catcode 13 becomes 13
+  }
+
+ \def\CategorySetupAccOut@{%
+  \HiOctetsCat@{13}%
+  \LowOctetsCat@{13}%% includes controls; may work as input
+  \MakeSpecialsOther@
+  \ActivateLatinLetters@ %% but but < > still cat 12
+  \ActivateFlagChars@
+  }
+
+ \def\CategorySetupLigOut@{%
+  \HiOctetsCat@{13}%
+  \LowOctetsCat@{13}%% includes controls; may work as input
+  \MakeSpecialsOther@
+  \LigContextActivations@
+   %% \RuLigContextActivations@ or \UkrLigContextActivations@
+  %% initially ^^M=\relax
+  }
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%      SecondPassPrepAccOut     %%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ \def\IFnextprimable@{\ifnum\uccode`##1=1\relax}
+
+
+ %%%%% \SecondPassPrepAccOut@ preps :
+   %%% AccOut is 2-pass process; see Eng.tex fo 2nd alone
+  %%%% First come a lot of definitions
+
+ \def\Gobble@#1{}%
+ \edef\OtherBacksl@{\ex@\Gobble@\string\\}%
+ \def\ExpTwiceAfter@{\ex@\ex@\ex@}%
+ \def\ExpThriceAfter@{\ex@\ExpTwiceAfter@\ex@}%
+ \def\ExpFourTimesAfter@{\ex@\ExpThriceAfter@\ex@}%
+
+%%%%% \SecondPassPrepAccOut@
+ %%%% The p-versions are \relax outside SecondPass group
+ \def \SecondPassPrepAccOut@{%
+   \let\pEng@=\Eng@ %% Begin English Letterwise mark
+   \let\pExcl@=\Excl@ %% escaping exclamation marks
+   \let\pPr@=\Pr@  %% escaping prime
+   \let\pBs@=\Bs@  %% smart backslash
+   \let\pCR@=\AccOutEndLine@
+   }
+
+%%%% \Eng@ meaning Begin English; will be let equal to \?
+ %%% \? will be prelim flag for English
+ \def\Eng@{\eng@}
+%%%% \eng@#1 meaning begin English with argument
+ \def\eng@#1{!#1\c@eng@}
+
+%%%% \c@eng@ continue English, first lap
+ \def\c@eng@#1{%
+  \ifx#1\Eng@
+    %\message{Is Eng@:\noexpand#1}%
+    \ex@\cc@eng@
+  \else
+    %\message{Not Eng@:\noexpand#1}%
+    \ifcat\noexpand#1a%% means Russian naked letter
+      !#1%% 8 then continue naked
+    \else
+      \ExpTwiceAfter@#1% after \ex@ removed here#1
+       %% just continue naked
+    \fi
+  \fi
+  }
+
+%%%% \cc@eng@ continuing begin English, since
+ %%% letter here guaranteed, as at \eng@
+ \def\cc@eng@#1{%
+   #1\c@eng@ %% this time do not deposit a \string!
+   }
+
+%%%% \Bs@ Backslash macro, will be \let equal to active \
+ %%%
+ \def\Bs@{\bs@}
+ \def\bs@#1{%
+   \ifx#1\Eng@
+     %\message{Is Eng@:\noexpand#1}%
+     \OtherBacksl@\ex@\cc@eng@
+   \else
+     %\message{Not Eng@:\noexpand#1}%
+     \ifx\Bs@#1%
+       %\message{Is Bs@:\noexpand#1}%
+       \OtherBacksl@\OtherBacksl@
+     \else
+       \ifcat\noexpand#1a%
+         \OtherBacksl@!#1
+       \else
+         \OtherBacksl@\ExpThriceAfter@#1%
+       \fi
+     \fi
+   \fi}
+
+%%%% \Pr@ Prime macro, will be \let equal to active '
+ %%% Is the preconverted character ' not yet doubled
+ %%% Beware that primes for "accented" Russian letters
+ %%% are already ' (cat 12) at this intermediate stage
+ \def\Pr@{\pr@}%
+  %
+ \def\pr@#1{%
+   \ifcat\noexpand#1\noexpand\Pr@ %% test for flag \Pr@ and friends
+     \(pr@_flag)''\ex@#1%
+   \else
+     \ifnum\uccode`#1=1 \@e
+     %% not flag but primable \IFnextprimable@
+       \(pr@_primable@)''#1%
+     \else
+       \if\noexpand#1'%% is it ' from ya and friends
+         \(pr@_prime)''#1%
+       \else
+         \(pr@_p)'\ExpThriceAfter@#1% finally sure one prime will do
+       \fi
+     \fi
+   \fi
+   }%
+
+%%%% \Excl@ Exclamation macro, will be \let equal to active !
+ %%% Is the preconverted character ! not yet doubled.
+ %%% Watch for interaction with \?=\Eng@.
+
+ \def\Excl@{\excl@}%
+ \def\excl@#1{%
+   \ifx#1\Excl@
+     !!\ex@\excl@
+   \else
+     \ifx#1\Eng@%%
+       %\message{Is Eng@:\string#1}%
+       !!\ex@\ex@\ex@\Eng@%
+     \else
+       \ifcat\noexpand#1a%
+         !!#1%
+       \else
+         \if\noexpand#1!%
+           %\message{Is !:\string#1}%
+           !!!%
+         \else
+           %\message{Not !:\string#1}%
+           !\ExpFourTimesAfter@#1%
+         \fi
+       \fi
+     \fi
+   \fi
+   }%
+
+ %%%% \EmptyEndLine@@ \UkrLigOutEndLine@ \AccOutEndLine@
+  %%% \endlinechar will be 13 and active and equal to:
+ \def\EmptyEndLine@@{}%
+  %%% but ALSO
+ \def\UkrLigOutEndLine@{\EmptyEndLine@@}%
+  %%% AND
+ \let\AccOutEndLine@\EmptyEndLine@@
+  %%% AND
+ \edef\AccInEndLine@{%
+       \ne@\Wobble@]\ne@\Wobble@\rbrace@\ne@\Gobble@\relax}%
+  %%% \Wobble@#1 is an end-of-line test
+   %% for AccIn mode and '[] '{} syntaxes
+   %%
+ \def\Wobble@#1{\cs@ W_#1\ecs@}
+ \ex@\edef\cs@ W_]\ecs@{}%
+ \ex@\edef\cs@ W_\rbrace@\ecs@{}%
+ \ex@\edef\cs@ W_\ecs@{Wobble}%% value must be string (not \relax)
+   %% since it will enter a \cs@ ... \ecs@
+
+   %% \AccInEndLine@ normally ultimately
+   %% vanishes if simply \edef expanded.
+   %% It's a \write that adds a CR in output
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%     AccIn ' ! \      %%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ \def\(#1){}
+
+ \def\@Acc{\@acc}
+
+ % \def\@acc#1{%
+ %    \ifnum \uccode`#1>0 \@e
+ %      %(@acc_uccode)%
+ %      %\cs@'\string#1\ecs@
+ %      \ex@\ex@\cs@ so_'\string#1\ecs@
+ %    \else
+ %      \ifx#1\@Acc
+ %        \(@acc_@Acc)%
+ %        \ex@'%
+ %      \else
+ %        \(@acc_puke)%
+ %        '\ex@\ex@\ex@#1%
+ %      \fi
+ %    \fi}
+
+ \def\@acc#1{%
+    \ex@\ifx\cs@ so_'\string#1\ecs@\relax
+      %\(@acc_puke for \cs@ so_'\string#1\ecs@)%
+      %% above tracer fails when #1 is )
+      '\ex@#1%
+    \else
+      %\(@acc_so_)%
+      \ex@\ex@\cs@ so_'\string#1\ecs@
+    \fi
+    }
+
+ \def\@Excl{\@excl}
+
+ \def\@excl#1{%
+   \ifnum \lccode`#1>0 \@e
+     \(@excl_c)\string#1\ex@\@c@excl %%(@excl_c)
+   \else
+     \ifx#1\@Excl
+       \(@excl_!)\string!%% (@excl_!)
+     \else
+       \(@excl_@@excl)\ex@\ex@\ex@ \@@excl \ex@\ex@\ex@#1%
+       %% quiery continues with \@@excl
+     \fi
+   \fi
+   }
+
+ \def\@@excl#1{%% handle _ and reliquat
+   \if\noexpand#1\string_%
+     %% \string!\string_ held back
+     \(@@excl_h)\ex@\@@UlnCheck %%(@@excl_h)
+   \else
+     \(@@excl_p)\string!\ex@#1%% (@@excl_p)
+   \fi
+   }
+
+ \def\@c@excl#1{%
+   \ifnum \lccode`#1>0 \@e
+     \(@c@excl_a)\string#1\ex@\@c@excl %%(@c@excl_a)
+   \else
+     \ifx#1\@Excl
+       \(@c@excl_@Excl)\ex@\ex@\ex@ \@eexcl %%\@UlnCheck
+       %% \@eexcl an "anti exclam"
+       %% \string! held back %%(@c@excl_!)
+     \else
+       \if\noexpand#1\string_%
+         %% \string!\string_ held back
+         \(@c@excl_hat)\ExpThriceAfter@\@@@UlnCheck %%(@c@excl_hat)
+       \else
+         \(@c@excl_p)\ExpThriceAfter@#1%% (@c@excl_p)
+       \fi
+     \fi
+   \fi
+  }
+
+
+ %%%  an "anti exclam or exit exclam"
+ \def\@eexcl#1{%
+    \ifnum \lccode`#1>0 \@e
+     \(@eexcl_x)\ex@#1%% (@eexcl_x)
+   \else
+     \if\noexpand#1\string_%
+       %% \string!\string_ held back
+       \(@eexcl_hat)\ex@\ex@\ex@\@@@UlnCheck %%(@eexcl_hat)
+     \else
+       \(@eexcl_p)\ex@\ex@\ex@#1%% (@eexcl_p)
+     \fi
+   \fi
+   }
+
+ %%% past ! occurring in Eng look for first _ for case of !__xy
+ \def\@UlnCheck#1{%
+   \if\noexpand#1\string_%
+     %% retain first \string_
+     \(@UlnCheck_h)\ex@\@@UlnCheck %%(@UlnCheck_h)
+   \else
+     \(@UlnCheck_p)\ex@#1%% (@UlnCheck_p)
+   \fi
+   }
+
+ %%% past !_ look for second _ for case of !__xy
+ \def\@@UlnCheck#1{%
+   \if\noexpand#1\string_%
+     %% retain second \string_
+     \(@@UlnCheck_d)\ex@\@DigitCheck %%(@@UlnCheck_d)
+   \else
+     \(@@UlnCheck_p)\string!\string_\ex@#1%% (@@UlnCheck_p)
+   \fi
+   }
+
+ %%% past end-of-english _ look for second _ for case of !__xy
+ \def\@@@UlnCheck#1{%
+   \if\noexpand#1\string_%
+     %% retain second \string_
+     \(@@@UlnCheck_d)\ex@\@DigitCheck %%(@@@UlnCheck_d)
+   \else
+     \(@@@UlnCheck_p)\string_\ex@#1%% (@@UlnCheck_p)
+   \fi
+   }
+
+ %%% \@DigitCheck
+ %%% past !__  look for hex digit
+ %%% Prudent approach avoids line overrun; speed OK?
+ \def\@DigitCheck#1{%
+   \ex@\ifx\cs@ x_\string#1\ecs@\@IsDigit
+     \ex@\@DigitAll\ex@#1%% (@DigitCheck_d)
+      %% replace #1 as only storage device available
+   \else
+     \string!\string_\string_\ex@#1 %%(@DigitCheck_p)
+   \fi
+   }
+
+ %%% \@DigitAll
+ %%% past !__<digit>  look for second hex digit #2
+ %%% Prudent approach avoids line overrun; speed OK?
+ \def\@DigitAll#1#2{%
+   \ex@\ifx\cs@ x_\string#2\ecs@\@IsDigit
+      %% x for hex%% (@DigitAll_d)
+     %\cs@!\string#1\string#2\ecs@ %% one octet replaces 5!
+     \cs@ ho_\string#1\string#2\ecs@
+   \else
+     \string!\string_\string_\ex@#1\ex@#2%
+      %% puke up five %% (@DigitAll_p)
+   \fi
+   }
+
+ %%%%%% \HexDigitsHolder@ \@IsDigitDefs
+ %
+ \def\HexDigitsHolder@{/0/1/2/3/4/5/6/7/8/9/a/b/c/d/e/f}
+ %
+ \def\@IsDigit{\@@IsDigit}%
+ \def\@IsDigitDefs{%% x_ for hex
+  \def/##1{\ex@\def\cs@ x_##1\ecs@{\@@IsDigit}}%
+   %% \@@IsDigit is sign of digit
+  \HexDigitsHolder@}
+
+ \@IsDigitDefs
+
+
+ %%% \@Bs and \@bs#1
+  \def\@Bs{\@bs}
+  \def\@bs#1{\OtherBacksl@
+   \ifnum \lccode`#1>0 \@e
+     \(@Bs_a)\string#1\ex@\@c@excl %%(@Bs_a)
+   \else
+     \ifx#1\@Bs
+       \(@Bs_bs)\OtherBacksl@ %%(@Bs_bs)
+     \else
+       \ifx#1\@Excl
+         \(@Bs_bs!)\ExpThriceAfter@\@bs@excl %%(@Bs_bs!)
+       \else
+         \(@Bs_o)\ExpThriceAfter@#1%% (@Bs_o)
+       \fi
+     \fi
+   \fi
+   }
+
+
+  \def\@bs@excl#1{%
+    \ifnum \lccode`#1>0 \@e
+        \(@bs@excl_lc)\ex@ #1%% do buggerall%% (@bs@excl_lc)
+    \else
+       \ifx#1\@Excl
+         \(@bs@excl_Excl)\string!%% (@bs@excl_Excl)
+       \else
+         \if\noexpand #1\string_%
+           \(@bs@excl_h)\ExpThriceAfter@\@@UlnCheck %%(@bs@excl_h)
+         \else
+           \(@bs@excl_o)\string!\ExpThriceAfter@ #1%% (@bs@excl_o)
+         \fi
+       \fi
+    \fi
+    }
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%        MainConversionLoop          %%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ \def\MainConversionLoop@{%
+  \message{\Sharp@}
+  \count255=0
+  \Loop@   %%
+    \advance\count255 1\relax
+    \ifnum\count255>40\relax
+      \count255=0\relax
+      \message{\Sharp@}%
+    \fi
+  \ifeof\MainStreamIn@
+  \else
+     \read\MainStreamIn@ to \Line@
+     \TheTreatLine@
+  \Repeat@
+  }
+
+ %%%%% \TreatLine... Macros
+  %
+ %%%% AccIn
+ \def\TreatLineAccIn@{%
+    %\show\Line@
+    %\show\AccInEndLine@
+    %\def\temp@{\ex@\Line@\AccInEndLine@}
+    %\show\temp@
+    %\tracingmacros=1
+    %\show ^^A
+    %\ex@\show\cs@ W_^^A\ecs@
+    \Wr@{\ex@\Line@\AccInEndLine@}% provisional?
+    }
+
+ %%%% AccOut
+ \def\TreatLineAccOut@{% new 25 Aug
+    \edef\Line@{\Line@}%% maybe add \EmptyEndLine@
+    \begingroup
+    \SecondPassPrepAccOut@
+    \Wr@{\Line@\AccOutEndLine@}%
+    \endgroup
+    }
+
+ %%%% LigOut \TreatLineLigOut@
+   %% is \TreatLineUkrLigOut@ or \TreatLineRuLigOut@
+
+ \def\TreatLineUkrLigOut@{% new 1 Nov
+    \Wr@{\ex@\UkrWB@\Line@\UkrLigOutEndLine@}
+  }% provisional?
+
+ \def\TreatLineRuLigOut@{% new 7 Sept
+    \Wr@{\Line@}}%
+
+
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%               I / O                %%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ \newread\MainStreamIn@
+ \newwrite\MainStreamOut@
+
+ \def\MainFileIn@{IN.txt}%
+ \def\MainFileOut@{OUT.txt}%
+ \def\AuxFileOut@{OUT.txt}%% this time, so not really needed
+
+ \def\AuxEncodingFile@{\cs@ \Encodingtag@ EncodingFile@\ecs@}
+ \def\ExtraEncodingFile@{extraenc.tex}
+ \def\HeadEncodingFile@{IN.txt}
+
+
+ %%%%% \SetupLineReads@ uses  \TheStreamIn@ and
+    %% \TheFileIn@ which must be specified
+ \def\SetupLineReads@{%
+  \openin\TheStreamIn@\TheFileIn@\relax
+  \ifeof\TheStreamIn@
+   \closein\TheStreamIn@
+   \def\Decision@{\iwr@{}%
+   \iwr@{ * Sorry, "\TheFileIn@" is absent\string/busy; quitting.}
+   \cs@ end\ecs@}
+  \else
+   \let\Decision@\relax
+  \fi
+  \Decision@
+  }
+
+ \def\SetupModifLineReads@{%% for Extra or Head
+   \let\TheFileIn@\AuxEncodingFile@ %% alternative here!
+   \let\TheStreamIn@\MainStreamIn@
+   \SetupLineReads@
+   }
+
+ \def\SetupMainLineReads@{%% for Extra or Head
+   \let\TheStreamIn@\MainStreamIn@
+   \let\TheFileIn@\MainFileIn@ %% alternative here!
+   \SetupLineReads@
+   }
+
+ %%%%% \SetupWriteOuts@
+
+ \def\SetupWriteOuts@{%
+  \immediate\openout\TheStreamOut@\TheFileOut@\relax
+  }
+
+ \def\SetupMainWriteOuts@{%
+  \let\TheStreamOut@\MainStreamOut@
+  \let\TheFileOut@\MainFileOut@
+  \SetupWriteOuts@
+  }
+
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%             INTERVIEW              %%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ %%%% This can serve as a table of contents for this section
+   %
+ \def\InterviewUser@{%
+   \GetPrevOptions@
+   \Splash@
+   \SetupMainLineReads@
+   \GetUserChanges@
+   \InscribeUserChanges@
+   \AbortLossyInput@
+   \SetupMainWriteOuts@
+   %\WriteProlog@
+   }
+
+
+ \def\ReservedPrevOptions@{7ARW}
+ \let\PrevOptions@\ReservedPrevOptions@
+
+ %%%% \GetPrevOptions@
+ 
+ \def\GetPrevOptions@{%
+  \openin\MainStreamIn@ email-ru.opn \relax
+  \ifeof\MainStreamIn@
+  \else
+   \read\MainStreamIn@ to \PrevOptions@
+  \fi
+  \closein\MainStreamIn@
+  %\show\PrevOptions@
+  \TestOptions@\PrevOptions@
+  \ifGoodOptions@
+    %\iwr@{Good PrevOptions.}
+    \PreImplant@\PrevOptions@ %% includes format test
+    %% then preimplantation done and atoms defined
+  \else
+    %\iwr@{Bad PrevOptions.}
+    \let\PrevOptions@\ReservedPrevOptions@ %% \TestOptions@ not needed
+    \PreImplant@\PrevOptions@ %% so that atoms defined
+  \fi
+ }
+
+ %%%% \PreImplant@ #1; 1st exp of #1 is some sifted options like 8SW
+ %%% Sets atomic tags \Direction@, \ACtype@,
+  %% \LangGroup@, \Encoding@, for these options
+ \def\PreImplant@#1{ %% for reuse
+   \ex@\PreImplant@@#1\endPreImplant@@} % 4 \relax for insurance
+ \def\PreImplant@@#1#2#3#4#5\endPreImplant@@{%
+   \def\Direction@{#1}
+   \def\ACtype@{#2}
+   \def\LangGroup@{#3}%\show\LangGroup@
+   \def\Encoding@{#4}%\show\Encoding@
+   }
+
+ %%%% \TestOptions@ for \PrevOptions from possibly damaged file
+ \def\TestOptions@@#1#2#3#4#5\endTestOptions@@{%
+    \IN@0#1@78@
+    \ifIN@
+      \IN@0#2@LA@
+      \ifIN@
+         \IN@0#3@RU@
+         \ifIN@
+            \IN@0#4@DEHMIWK@
+            \ifIN@
+               \def\ttemp{#5}%\show\ttemp
+               \ifx\ttemp\empty
+               \GoodOptions@true
+               %\message{GoodOptions@true}%
+               \fi
+            \fi
+         \fi
+      \fi
+   \fi
+   }
+ %
+ \def\TestOptions@#1{%
+   %\edef\temp{#1}\show\temp
+   \GoodOptions@false
+   \ex@\TestOptions@@#1\endTestOptions@@}
+
+%%%% \SetModetag@ sets \Modetag@ to AccIn, AccOut, or LigOut
+  %% \LangGroup@ does not affect this
+ \def\SetModetag@{%
+   \if\Direction@ 8%
+     \def\Modetag@{AccIn}%
+   \else
+     \if\ACtype@ L%
+       \def\Modetag@{LigOut}%
+     \else
+       \def\Modetag@{AccOut}%
+     \fi
+   \fi}
+
+%%%% \PrepOptionTags@
+ %%% Uses \Direction@, \ACtype@, \LangGroup@, \Encoding@.
+ %%% Sets Long tags \Modetag@,
+  %% \ACtypetag@, \LangGrouptag@, \Encodingtag@,
+ %
+ \def\Ltag@{Lig}
+ \def\Atag@{Acc}
+ %
+ \def\Dtag@{Dos}
+ \def\Mtag@{Mac}
+ \def\Itag@{Iso}
+ \def\Wtag@{Win}
+ \def\Ktag@{Koi}
+ \def\Etag@{Extra}
+ \def\Htag@{Head}
+ %
+ \def\Rtag@{Ru}\def\Rlongtag@{Russian}
+ \def\Utag@{Ukr}\def\Ulongtag@{Ukrainian}
+ %
+ \def\PrepOptionTags@{%
+  \SetModetag@ %% sets \Modetag@
+  \edef\ACtypetag@{\cs@\ACtype@ tag@\ecs@}%
+  \edef\Encodingtag@{\cs@\Encoding@ tag@\ecs@}%
+  \edef\LangGrouptag@{%
+    \cs@\LangGroup@ tag@\ecs@}% short name Ru or Ukr or ...
+  \edef\TheLangGroup@{%
+    \cs@\LangGroup@ longtag@\ecs@}%% full name; for dialog
+  \edef\LangAlphabetA@{\cs@\LangGrouptag@ AlphabetA@\ecs@}
+  \edef\LangAlphabetZ@{\cs@\LangGrouptag@ AlphabetZ@\ecs@}
+  }
+
+ \def\iwr@{\immediate\write16}%
+ \def\wr@{\immediate\write\MainStreamOut@}%
+ \def\MainFileIn@{IN.txt}%
+ \def\MainFileOut@{OUT.txt}%
+    %{\cs@ OUT-\SiftedOptions@.txt\ecs@}%
+ \def\ExtraEncodingFile@{extraenc.tex}
+
+ \def\batchindirname@{IN_BAT}%
+ \def\batchoutdirname@{OUT_BAT}%
+ \def\batchfilename@{batch}%
+
+ \def\DosBlurb@{DOS New Alternative Cyrillic encoding cp866nav}%
+ \def\MacBlurb@{Apple Macintosh Cyrillic}%
+ \def\IsoBlurb@{ISO8859-5 of 1988 for Sun,DEC,HP,Linux... }%
+ \def\WinBlurb@{Windows Cyrillic encoding, MicroSoft cp1251}%
+ \def\KoiBlurb@{KOI8 Internet Cyrillic (RFC-1489 of 1993)}%
+ \def\HeadBlurb@{Header encoding, placed near top of input}%
+ \def\ExtraBlurb@{Extra encoding from your own "\ExtraEncodingFile@"}%
+
+ \def\RuAlphabetA@{ a b v g d e 'o 'z z i j k l m n o p r s t}%
+ \def\RuAlphabetZ@{ u f x 't c w 'w q y h 'e 'u 'a }%
+
+ \def\UkrAlphabetA@{ a b v g(or h) 'g d e 'e 'z z y i 'i j k}%
+ \def\UkrAlphabetZ@{ l m n o p r s t u f x 't c w 'w q 'u 'a }%
+
+ \def\Rule@{ //////////////////////////////////////////////////////////}%
+
+
+ %%%%%% \Splash@
+ \def\Splash@ {%
+ \MakeSlantPct@
+ \iwr@{}%
+ \iwr@{\Rule@}%
+ \iwr@{ ///////////////////// email-ru.tex ///////////////////////}%
+ \iwr@{ // Converts Cyrillic text files between universal 7-bit}%
+ \iwr@{ // "ASCI-Cyrillic" and 8-bit Cyrillic text encodings.}%
+ \iwr@{ // Name input file "\MainFileIn@", alongside of "email-ru.tex".}%
+ \iwr@{ //// OPTIONS: Strike any option keys; then one <return>:-}%
+ \iwr@{ / X = abort now.}%
+ \iwr@{ / 8 = 8-bit output ; 7 = 7-bit output. }%
+ %\iwr@{ /// There are two routes for input:}%
+ %\iwr@{ / F = File ("\MainFileIn@", normally %
+             %  alongside of this "email-ru.tex").}%
+ %\iwr@{ / B = Batch (files in directory %
+             % "\batchindirname@", in same location).}%
+ \iwr@{ /// There are two supported 7-bit formats:}%
+ \iwr@{ / L = Lossy transcription (using Ligatures);}%
+ \iwr@{ / A = ASCII-Cyrillic, using ' as accent and also ! \noexpand\ }%
+ \iwr@{ /// There are two supported language groups:}%
+ \iwr@{ / R = Russian (including Bulgarian and Byelorussian);}%
+ \iwr@{ / U = Ukrainian.}%
+ \iwr@{ /// There are many supported 8-bit Cyrillic encodings:}%
+ \iwr@{ / D = \DosBlurb@;}%
+ \iwr@{ / M = \MacBlurb@;}%
+ \iwr@{ / I = \IsoBlurb@;}%
+ \iwr@{ / W = \WinBlurb@;}%
+ \iwr@{ / K = \KoiBlurb@;}%
+ \iwr@{ / H = \HeadBlurb@;}%
+ \iwr@{ / E = \ExtraBlurb@.}%
+ \iwr@{ //// HELP: toward end of this %
+         macro file "email-ru.tex".}%
+ \iwr@{\Rule@}%
+ \iwr@{}%
+ }
+
+
+ %%% Subtle sanitization to see only ACDIKLMSTWX78
+ %%% Fails with case change alone; so use active too
+ \def \SeeOnlyACDEHIKLMRSTUWX78@{%
+  \count255=0\relax
+  \Loop@
+    \catcode\count255=9\relax
+    \advance\count255 by 1\relax
+  \ifnum
+    \count255<256\relax
+  \Repeat@
+  \catcode`7=12\relax
+  \catcode`8=12\relax
+  %% Undo above for 11 letters
+  \def/##1{\catcode`##1=11\relax}%
+  /A/C/D/E/H/I/K/L/M/R/S/T/U/W/X/a/c/d/e/h/i/k/l/m/r/s/t/u/w/x
+  \catcode`7=12\relax\catcode`8=12\relax
+  %% next make active a expand to letter A, etc.
+  \def/##1{\uccode`\~=`##1\relax\uppercase{\def~{##1}}}%
+  /a/c/d/e/h/i/k/l/m/s/r/t/u/w/x %% these are cat 11
+  %% then make these 11 letters active
+  \def/##1{\catcode`##1=13\relax}%
+  /a/c/d/e/h/i/k/l/m/r/s/t/u/w/x
+  }
+
+ \def\GetUserChanges@{%
+   \iwr@{ *** Default options: \PrevOptions@. }%
+   \iwr@{ *** Just type any change(s) and hit <return>.}%
+   \iwr@{ *** (Lowercase is OK.)}%
+   \begingroup
+     \SeeOnlyACDEHIKLMRSTUWX78@
+     \global\read16 to \YourChanges
+     \xdef\YourChanges{\YourChanges}
+   \endgroup
+   %\show\YourChanges
+   \let\UserChanges@\YourChanges
+   %\show\UserChanges@
+   \let\Reliquat@\UserChanges@
+   %\show\Reliquat@
+   \def\SiftedOptions@{}%
+   }
+
+
+ \def\Codify@#1{%
+   \IN@0#1@\Reliquat@ @%
+   \ifIN@\else
+     \edef\temp{#1}\message{Bug in \string\Codify@.}
+     \show\temp\show\Reliquat@
+     \show\Direction@
+   \fi
+   \SPLIT@0#1@\Reliquat@ @%
+   \edef\Reliquat@{\the\Initialtoks@\the\Terminaltoks@}%
+   \edef\SiftedOptions@{\SiftedOptions@#1}%
+  }
+
+
+ \def\CaseX@{%
+  \IN@0X@\UserChanges@ @%
+  \ifIN@
+    \def\Decision@{
+      \iwr@{ * Exit requested (by X).}
+      \endgroup\end}%
+  \else
+    \def\Decision@{}%
+  \fi
+  \Decision@}
+
+  \def\AdjustDirection@{%
+   %\show\UserChanges@
+   \IN@07@\UserChanges@ @%
+   \ifIN@
+     \Codify@{7}%
+   \else
+   \IN@08@\UserChanges@ @%
+   \ifIN@
+     \Codify@{8}%
+   \else
+     \edef\Reliquat@{\Reliquat@\Direction@}
+     \Codify@{\Direction@}%
+   \fi\fi
+   }
+
+  \def\AdjustACtype@{%
+   \IN@0L@\UserChanges@ @%
+   \ifIN@
+    \Codify@{L}%
+   \else
+   \IN@0A@\UserChanges@ @%
+   \ifIN@
+    \Codify@{A}%
+   \else
+    \edef\Reliquat@{\Reliquat@\ACtype@}
+    \Codify@{\ACtype@}%
+   \fi\fi
+   }
+
+  \def\AdjustLangGroup@{%
+   \IN@0R@\UserChanges@ @%
+   \ifIN@
+    \Codify@{R}%
+   \else
+   \IN@0U@\UserChanges@ @%
+   \ifIN@
+    \Codify@{U}%
+   \else
+    \edef\Reliquat@{\Reliquat@\LangGroup@}
+    \Codify@{\LangGroup@}%
+   \fi\fi
+   }
+
+ \def\AdjustEncoding@{%
+   \IN@0D@\UserChanges@ @%
+   \ifIN@
+    \Codify@{D}%
+   \else
+   \IN@0M@\UserChanges@ @%
+   \ifIN@
+    \Codify@{M}%
+   \else
+   \IN@0I@\UserChanges@ @%
+    \ifIN@
+    \Codify@{I}%
+   \else
+   \IN@0W@\UserChanges@ @%
+   \ifIN@
+    \Codify@{W}%
+   \else
+   \IN@0K@\UserChanges@ @%
+   \ifIN@
+    \Codify@{K}%
+   \else
+   \IN@0H@\UserChanges@ @%
+   \ifIN@
+    \Codify@{H}%
+   \else
+   \IN@0E@\UserChanges@ @%
+   \ifIN@
+    \Codify@{E}%
+   \else
+    \edef\Reliquat@{\Reliquat@\Encoding@}
+    \Codify@{\Encoding@}%
+   \fi\fi\fi\fi\fi\fi\fi
+  }
+
+
+ %%%% \InscribeUserChanges@
+  %%% Uses \PrevOptions@ in atomic form plus \UserChanges@
+  %%% Yields \SiftedOptions@ and \Reliquat@
+  %%% Yields full implementation of \SiftedOptions@
+ \def\InscribeUserChanges@{%
+   \CaseX@
+   \AdjustDirection@
+   \AdjustACtype@
+   \AdjustLangGroup@
+   \AdjustEncoding@
+   \PreImplant@\SiftedOptions@ % updates atomic options
+   \PrepOptionTags@
+     %\iwr@{ Direction@ = \Direction@}%
+     %\iwr@{ ACtype@ = \ACtype@}%
+     %\iwr@{ Encoding@ = \Encoding@}%
+     \iwr@{ Options keys being used: \SiftedOptions@}%
+     \iwr@{}%
+     \iwr@{ Modetag@ = \Modetag@}%
+     \iwr@{ ACtypetag@ = \ACtypetag@}%
+     \iwr@{ LangGrouptag@ = \LangGrouptag@}%
+     \iwr@{ Encodingtag@ = \Encodingtag@}%
+     \iwr@{}%
+   }
+
+ \def\AbortLossyInput@{%
+    %\message{AbortLossyInput@}%
+    \def\Decision@{}%
+    \if\ACtype@ L%
+      \if\Direction@ 8%
+         \iwr@{ !!! Sorry, type L (=Lossy) %
+             7-bit cannot be converted to 8-bit!}%
+         \def\Decision@{\read16 to \byebye  \end}%
+      \fi
+   \fi
+   \Decision@}
+
+
+
+ \def\PrologRule@
+  { /////////////////////////////////////////////////////////////////}%
+
+ \def\WritePrologOut@{%
+  \MakeSlantPct@
+  \Wr@{\PrologRule@}
+  %\show\SiftedOptions@
+    \Wr@{ //// Converted by "email-ru.tex", %
+     \cs@ email-ru-version\ecs@, options \SiftedOptions@, to}
+  \IN@07@\SiftedOptions@ @%
+  \ifIN@
+    \IN@0L@\SiftedOptions@ @%
+    \ifIN@
+      \Wr@{ //// \TheLangGroup@\space
+        text in a readable but lossy 7-bit ASCII format,}
+      \IN@0R@\SiftedOptions@ @%
+      \ifIN@
+        \Wr@{ //// namely the U.S. Lib. of Congress transcription scheme.}
+      \else
+        \Wr@{ //// namely the official Ukrainian one of 1996.}
+      \fi
+    \else
+      \Wr@{ //// \TheLangGroup@\space
+          text in faithful 7-bit ASCII-Cyrillic format.}
+      \Wr@{ //// The 33 letters of the modern \TheLangGroup@
+          \space alphabet are:}
+      \Wr@{ ////   \LangAlphabetA@}
+      \Wr@{ ////   \LangAlphabetZ@}
+      \Wr@{ //// For perfect restoration %
+          to many common 8-bit Cyrillic text}
+      \Wr@{ //// encodings, %
+          obtain the TeX utility  "email-ru.tex"  from CTAN.}
+    \fi
+  \else
+    \Wr@{ //// \TheLangGroup@\space
+         text in the 8-bit extended ASCII encoding:-}
+    \Wr@{ //// \cs@ \Encodingtag@ Blurb@\ecs@. For readable}
+    \Wr@{ //// ASCII transcriptions, %
+         use "email-ru.tex" available on CTAN.}
+  \fi
+  \Wr@{\PrologRule@}
+  \Wr@{}
+  \iwr@{ Processing (in 40 line units):-}\message{ }%
+  }
+
+
+
+ %%%%%%%%%%%%%%%%%%% <--------- END OF INTERVIEW
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%           MODIFICATIONS            %%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+ \newif\ifExit@
+ \newif\ifModif@
+ \newif\ifAbortModif@
+
+ \newtoks\Modiftoks@
+
+ \newcount\Modifcount@
+ \newcount\EndModifcount@
+ %\newcount\Prologcount@
+
+ \def \MaybeAbortModif@{
+    \ifAbortModif@
+     \iwr@{}
+     \endgroup\endgroup
+     \iwr@{ !! Hit return to abort.}
+     \read-1 to \Junk@
+     \ex@\end
+   \fi
+  }
+
+  %%%%% \FindAndCopyModif@
+    %% Uses \AuxEncodingFile@, \AuxStreamIn@
+    %% provides \Modifcount@, \EndModifcount@
+ \def\FindAndCopyModif@{%
+   \SetupModifLineReads@
+   \count255=0
+   \Loop@   %%
+     \read\MainStreamIn@ to \Line@
+     % \iwr@{ Line@ = \Line@}%
+     \ifeof\MainStreamIn@
+      \AbortModif@true
+       \iwr@{}%
+       \iwr@{ !! At eof of \AuxEncodingFile@.}%
+       \iwr@{ !! Although modification was announced for input,}%
+       \iwr@{ !! the flag \ModifFlag@\space is missing.}%
+       \iwr@{ !! The input line number now is \the \count255.}%
+     \fi
+     \MaybeAbortModif@
+     \advance\count255 1\relax
+     \ifnum\count255>80\relax
+       \Exit@true
+       \global\AbortModif@true
+       \iwr@{}%
+       \iwr@{ !! Input limit.}%
+       \iwr@{ !! Although modification was announced for input,}%
+       \iwr@{ !! the flag \ModifFlag@\space is missing.}%
+       \iwr@{ !! The input line number now is \the \count255.}%
+       \iwr@{ Line@ = \Line@}%
+     \fi
+     \IN@0\ModifFlag@ @\Line@ @
+     \ifIN@
+       %\iwr@{}%
+       %\iwr@{ *** Bingo ***************}%
+       \Exit@true
+       \Modif@true
+       \global\Modifcount@=\count255
+       %\iwr@{}
+       %\iwr@{ ** Modification beginning at line \the\count255.}
+       %\iwr@{ ** Exit@ is true.}
+     \fi
+   \ifExit@
+   \else
+   \Repeat@
+   %
+   \MaybeAbortModif@
+   %
+   \Exit@false
+   \Chaintoks@{}%% clean slate
+   \ChainLine@ %% in reserve for keeps !!!!!!!!!!!
+   \Wr@{\Line@}%% temp for reading
+   \Loop@ %%
+     \read\TheStreamIn@ to \Line@
+     \ChainLine@ %% in reserve for keeps !!!!!!!!!!!
+     \Wr@{\Line@}%% temp for reading
+     \ifeof\MainStreamIn@
+       \Exit@true
+       \AbortModif@true
+       \iwr@{}%
+       \iwr@{ !! End of input file and the}%
+       \iwr@{ !! flag \EndModifFlag@\space is missing.}%
+       \iwr@{ !! The line number now is \the \count255 :  }%
+     \fi
+     \MaybeAbortModif@
+     \advance\count255 1\relax
+     %\iwr@{}%
+     %\iwr@{ ** Count 255 advanced to \the\count255.}%
+     \ifnum\count255>220\relax
+       \Exit@true
+       \AbortModif@true
+       \iwr@{}%
+       \iwr@{ !! Runon modification. Aborting at line 220.}%
+       \iwr@{ !! Need a flag: }%
+       \iwr@{ !! "\EndModifFlag@"}%
+       \iwr@{ !! The line number now is \the \count255 :  }%
+     \fi
+     \MaybeAbortModif@
+     \IN@0\EndModifFlag@ @\Line@ @%
+     \ifIN@
+       \Exit@true %\message{** Exit@true **}%
+       \global\EndModifcount@=\count255
+       %\iwr@{}%
+       %\iwr@{ ** Modification ending at line \the\count255.}%
+       %\iwr@{ ** Exit@ is true. }%
+     \fi
+   \ifExit@
+   \else
+   \Repeat@
+   %
+   \cs@ \Encodingtag@ StreamInAdjust@\ecs@
+   %% Explanation: If Extra is encoding tag, then closein
+   %% \ExtraEncodingFile@ and openin \MainFileIn@
+   %% But if it is Head then do nothing and continue input.
+   \immediate\closeout\MainStreamOut@
+    %\iwr@{}%
+    %\iwr@{ *** Both loops completed.}%
+    %\iwr@{ *** Modification began at line \the\Modifcount@.}%
+    %\iwr@{ *** Modification ended at line \the\EndModifcount@.}%
+    %\iwr@{ *** See modif in "\MainFileOut@". %
+    %       Then hit <return> to continue.}%
+    %\read16 to \Junk@
+   }
+
+ \def\ExtraStreamInAdjust@{%
+    \immediate\closein\MainStreamIn@
+    \immediate\openin\MainStreamIn@\MainFileIn@\relax}
+
+ %% \HeadStreamInAdjust@ will be relax
+
+
+ \MakeSlantPct@
+
+  \uccode`!=`\%
+  \uccode`?=`\#
+  \uppercase{%
+  \edef\ModifFlag@{!?[<ASCII-CYRILLIC\string_MODIF>?]}%
+  \edef\EndModifFlag@{!?[<ASCII-CYRILLIC\string_ENDMODIF>?]}%
+  }
+  \uccode`!=0
+  \uccode`?=0
+
+   \def\CatsForCopying@{%
+   \LowOctetsCat@{12}%
+   \HiOctetsCat@{12}%
+   \MakeSpecialsOther@ }
+
+
+ \def\TransCodeTheRest@{%
+   \count255=0
+   \Loop@   %%
+   \advance\count255 by 1\relax
+   \ifnum\count255=40\relax
+     \count255=0\message{\Sharp@}%
+   \fi
+   \ifeof\MainStreamIn@
+   \else
+      \read\MainStreamIn@ to \Line@
+      \ex@\uppercase\ex@{\ex@\Wr@\ex@{\Line@}}%
+      %\iwr@{\Line@}%
+   \Repeat@
+   }
+
+
+ \def\DoConversion@{%
+  \iwr@{}%
+  \iwr@{ ** ExploitModifs@}%
+   %
+  \TransCodeTheRest@
+  \immediate\closein\MainStreamIn@
+  \immediate\closeout\MainStreamOut@
+  }
+
+
+ %%%%%%%%%%%%%%%%%%% <--------- END OF MODIFICATIONS
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%       \ImplantCurrentOptions@      %%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+   %%%%%% \ImplantCurrentOptions@
+     %% Is unique bridge between interview and converter parts
+   %%%%% Currently \Modetag@ (LigOut or AccOut )
+     %% and \Encodingtag@ determine \ACtypetag@
+     %% so last is confined to Interview.
+   %%%%% \Modetag@ \Encodingtag@ \LangGrouptag@  are all
+     %% that is currently used from Interview
+ \def \ImplantCurrentOptions@{%
+   %%%%% \CategorySetup@
+   \ex@\let\ex@\CategorySetup@
+         %%**** = formally indep of encoding and language
+         \cs@ CategorySetup\Modetag@ @\ecs@
+   %%%%% \TheTransSetup@
+   \ex@\let\ex@\TheTransSetup@ %%****
+         \cs@ TransSetup\Modetag@ @\ecs@
+   %%%%% \MainConversionLoop@ is formally invariant
+   %%%%% \TreatLineLigOut@ %%** means formally indep of encoding
+   \ex@\let\ex@\TreatLineLigOut@ %%
+       \cs@ TreatLine\LangGrouptag@ LigOut@\ecs@
+   %\show\TreatLineLigOut@
+   %%%%% \TheTreatLine@
+   \ex@\let\ex@\TheTreatLine@ %%****
+         \cs@ TreatLine\Modetag@ @\ecs@  %%
+   %\show\TheTreatLine@
+   %%%%% \TheEightbitEncodingVect@
+   \ex@\let\ex@\TheEightbitEncodingVect@ %% formally indep of language
+         \cs@ \Encodingtag@ EncodingVect@\ecs@
+         %\show\TheEightbitEncodingVect@
+         %\ex@\show\cs@ \Encodingtag@ EncodingVect@\ecs@
+   %%%%% \@TheModeShorts  \@TheAccShorts or \@TheLigShorts
+   \ex@\let\ex@\@TheAccShorts %%**
+         \cs@ @AccShorts\LangGrouptag@\ecs@
+   \ex@\let\ex@\@TheLigShorts %%**
+         \cs@ @LigShorts\LangGrouptag@\ecs@
+   %%%%% \@HiOctetLigOutDefs
+   \ex@\let\ex@\@HiOctetLigOutDefs %%**
+         \cs@ @HiOctet\LangGrouptag@ LigOutDefs\ecs@
+   %%%%% \ActiveLigOutDefs@
+   \ex@\let\ex@\ActiveLigOutDefs@ %%**
+         \cs@ Active\LangGrouptag@ LigOutDefs@\ecs@
+   %%%%% \LigContextActivations@
+   \ex@\let\ex@\LigContextActivations@ %%**
+         \cs@ \LangGrouptag@ LigContextActivations@\ecs@
+   %%%%% \ThePrepMoreLiveAccIn@
+   \ex@\let\ex@\ThePrepMoreLiveAccIn@ %%**
+         \cs@ PrepMoreLive\LangGrouptag@ AccIn@\ecs@
+   %\show\PrepMoreLiveAccIn@
+   }
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%                MAIN                %%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   %
+ %% \Main@:- After \CategorySetup@ to \endgroup
+ %% must avoid   space { }  etc
+ \def\Main@{%
+   \begingroup
+   \InterviewUser@
+   \DoTheHeader@ %% hiatus "}{" ,  but here
+     %% \SiftedOptions@, \PrevOptions@ etc. etc. global
+   \ImplantCurrentOptions@
+   \TheTransSetup@
+   %\ex@\show\cs@'\string>\ecs@
+   \MaybeSetupLineReads@
+   \begingroup
+     \CategorySetup@
+     %\showthe\catcode`\-
+     %\showthe\catcode127
+     %\showthe\catcode32\relax
+     %\showthe\catcode`\\
+     \MainConversionLoop@
+   \endgroup
+   \Endgame@
+   \endgroup
+   \end
+  }
+
+ \def\MaybeSetupLineReads@{%
+   \def\temp@{E}%
+   \ifx\Encoding@\temp@
+     \SetupMainLineReads@
+   \fi}
+
+ \def\ProcessingReport@{}
+
+
+ \def\DoTheHeader@{%
+  \IN@0\Encoding@ @DMIWK@
+  \ifIN@
+    \ex@\DoOrdHeader@
+  \else
+    \ex@\DoAuxHeader@
+  \fi}
+
+
+  \def\DoOrdHeader@{%
+   \SetupMainWriteOuts@
+   \WritePrologOut@
+   }
+
+ \newtoks\temptoks@
+
+  \def\DoAuxHeader@{%
+   %\iwr@{ * \string\DoAuxHeader@}%
+   \SetupMainWriteOuts@
+   \CatsForCopying@
+   %\iwr@{}
+   \iwr@{ * \ne@\FindAndCopyModif@ :- %
+    Seeking modifs in "\AuxEncodingFile@".}%
+   \iwr@{}
+   \FindAndCopyModif@
+   \global\Chaintoks@\Chaintoks@
+   \global\let\SiftedOptions@\SiftedOptions@
+   \global\let\PrevOptions@\PrevOptions@
+   \global\let\Modetag@\Modetag@
+   \global\let\Encodingtag@\Encodingtag@
+   \global\let\LangGrouptag@\LangGrouptag@
+   \global\let\TheLangGroup@\TheLangGroup@
+   \global\let\LangAlphabetA@\LangAlphabetA@
+   \global\let\LangAlphabetZ@\LangAlphabetZ@
+   \endgroup %%%%%%%%%%%%% coming up for old categories
+   \let\AsciiCyrModif\relax %% to get by gate on encoding
+   %\iwr@{ * Now digesting the modifs in "\MainFileOut@".}%
+   %\iwr@{}%
+   \input\MainFileOut@ %% !!!!!!!!
+   \begingroup %%%%%%%%%%%%
+   \CatsForCopying@
+   %% Now wipe out \MainFileOut@
+   \SetupMainWriteOuts@
+   \WritePrologOut@
+   \Wr@{\the\Chaintoks@}\Wr@{}%
+   \global\Chaintoks@{}%% Cleanup
+   \temptoks@\ex@{\AuxEncodingVect@}%
+     %\showthe\temptoks@
+   %\iwr@{}%
+   %\iwr@{ ** Here is meaning of \string\AuxEncodingVect@:}%
+   %\iwr@{\the\temptoks@}%
+   %\iwr@{}%
+   %\iwr@{ ** Hit <return> to continue.}%
+   %\read16 to \Junk
+   \ex@\let\cs@\Encodingtag@ EncodingVect@\ecs@\AuxEncodingVect@
+    }%
+
+
+  %\let\ExtraEncodingVect@\NullEncodingVect@
+  %\let\HeadEncodingVect@\NullEncodingVect@
+
+
+ %%%%% \Closing@
+ \def\Closing@{%
+   \ProcessingReport@
+   \iwr@{}
+   \iwr@{ *** Finished! See \MainFileOut@\space
+                  alongside of \MainFileIn@.}%
+   %\iwr@{ *** Hit <return> to exit.}%
+   %\read16 to \byebye
+    }
+
+ \def\WriteEpilog@{%
+  \MakeSlantPct@
+  %\Wr@{}%
+  \Wr@{\PrologRule@}%
+  \Wr@{ //// End of output by %
+       "email-ru.tex", with options \SiftedOptions@.}%
+  \Wr@{\PrologRule@}%
+  }
+
+ \def\WritePrevOptions@{%
+  \ifx\SiftedOptions@\PrevOptions@
+  \else
+    \immediate\openout\MainStreamOut@ email-ru.opn \relax
+    \immediate\write\MainStreamOut@{\SiftedOptions@}%
+    \immediate\closeout\MainStreamOut@
+  \fi
+  }%
+
+ \def\Endgame@{%
+  \WriteEpilog@
+  \immediate\closein\MainStreamIn@
+  \immediate\closeout\MainStreamOut@
+  \WritePrevOptions@
+  \Closing@
+  %%%%%%%% End of assimilation categories
+  %%
+  \catcode`\/=12 %% was 13
+  \catcode`\|=12 %% was 13
+  \catcode1=\CatOne@ %% syntactical trick for AccIN
+  \catcode`\@=12 %% was 11
+  }
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%           EXECUTE MAIN             %%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ \Main@
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ \endinput
+
+
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%                                            %%%%
+ %%%      DOCUMENTATION FOR "email-ru.tex"      %%%%
+ %%%                                            %%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Nota Bene: This documentation is mostly ASCII text. But it
+requires a few lines of Cyrillic text. These are presented in
+the MS Windows 8-bit encoding cp1251 for octets 128--255. As
+cyrillic characters may not display correctly, all blocks of
+one or more such lines are preceded by a warning line tagged
+"%#Cy(" and followed by  a line tagged "%#Cy)".  GIF versions
+are visible on the HTML home page at
+
+ http://topo.math.u-psud.fr/~lcs/ASCII-Cyrillic/ascii-cy.htm
+
+
+                       CONTENTS
+
+ SECTION 1  Introduction
+ SECTION 2  Russian ASCII-Cyrillic
+ APPENDIX   ASCII-Cyrillic for Bulgarian and Byellorussian
+ APPENDIX   ASCII-Cyrillic for Ukrainian
+ APPENDIX   Specifying a Cyrillic encoding vector in the input
+ APPENDIX   Specifying an external Cyrillic encoding vector
+ APPENDIX   The ^^xy pitfall
+ APPENDIX   Email transfer checklist
+
+
+
+                      SECTION 1
+
+                *** Introduction ***
+
+     This utility serves Russian and Ukrainian languages in
+parallel.  The documentation is initially for Russian and the
+few modifications needed to adapt to the Ukrainian alphabet are
+concentrated in an appendix.
+
+     Here is a fragment of Russian email in 8-bit Microsoft
+Windows Russian text encoding. It can be typed and read on
+any computer in any country where a Cyrillic alphabet is
+indigenous --- but rarely beyond.
+
+%#Cy(
+   На обратном пути Gardine объяснила мне, как
+   делать пересадку на метро. Мы с ней проехали
+   большую часть пути вместе. Она вышла на
+   остановке после того, как мы пересели на мою
+   линию. Пользоваться  метро №13A,
+   действительно, очень просто -- гораздо проще,
+   чем  в Москве. Когда я это поняла, то сразу
+   успокоилась. Сейчас всё в порядке. Я могу
+   пользоваться метро, и уже не боюсь ходить по
+   Парижу.
+%#Cy)
+
+     Even this degree of portability is hampered by the
+frequent need to re-encode for another computer operating
+system. If that problem is already bothering you here,
+you may want to read the HTML or PDF formatted documentation 
+available at http://topo.math.u-psud.fr/~lcs/ASCII-Cyrillic/
+or on CTAN TeX archives.
+
+     The utility "email-ru.tex" serves primarily to  quickly
+convert this 8-bit text to and from a new 7-bit ASCII
+transcription of Russian, called "ASCII-Cyrillic" which is is
+both typeable and readable on every computer worldwide:
+
+   Na obratnom puti !Gardine obq'asnila mne, kak
+   delath peresadku na metro. My s nej proexali
+   bolhwu'u casth puti vmeste. Ona vywla na
+   ostanovke posle togo, kak my pereseli na mo'u
+   lini'u. Polhzovaths'a  metro 'N13!A,
+   dejstvitelhno, ocenh prosto -- gorazdo pro'we,
+   cem  v Moskve. Kogda 'a 'eto pon'ala, to srazu
+   uspokoilash. Sejcas vs'o v por'adke. 'A mogu
+   polhzovaths'a metro, i u'ze ne bo'ush xodith po
+   Pari'zu.
+
+Well chosen English (Latin) letters stand for most Russian
+letters. To distinguish the remaining handful of Russian
+letters, a prefixed accent  '  is used.  Further, to introduce
+English words, the exclamation mark !  appears.  The whole
+ASCII-Cyrillic system for Russian can hopefully be learned 
+in an hour.
+
+     Russian prose (8-bit encoded) is less than 4 percent
+bulkier in 7-bit ASCII-Cyrillic form. Thus typing speed
+for ASCII-Cyrillic on any computer keyboard can approach
+that for a Cyrillic keyboard.
+
+     The bulk difference of 4 percent drops to less then 1
+percent when modern "gzip" compression is applied to both.
+Thus there is virtually no penalty for storing Cyrillic text
+files in ASCII-Cyrillic form.
+
+     The 7-bit ASCII-Cyrillic form can be converted by
+"email-ru.tex" back to any of the most used 8-bit encodings.
+
+     ASCII-Cyrillic is a cousin of existing transcriptions of
+Russian which differ in using the concept of ligature -- i.e.
+they use two or more English letters for certain Russian letters.
+The utility "email-ru.tex" also converts Russian to one such
+ligature-based transcription system established by the the USA
+Library of Congress:
+
+   Na obratnom puti Gardine ob\jasnila mne, kak
+   delat' peresadku na metro. My s nej proexali
+   bol'shuju chast' puti vmeste. Ona vyshla na
+   ostanovke posle togo, kak my pereseli na moju
+   liniju. Pol'zovat'sja  metro No13A,
+   dejstvitel'no, ochen' prosto -- gorazdo proshche,
+   chem  v Moskve. Kogda ja eto ponjala, to srazu
+   uspokoilas'. Sejchas vse v porjadke. Ja mogu
+   pol'zovat'sja metro, i uzhe ne bojus' xodit' po
+   Parizhu.
+
+Caveat: Accurate reconversion of existing ligature-based
+transcriptions back to 8-bit format requires
+a good deal of human intervention.
+
+     Although not more readable, the ASCII-Cyrillic
+representation has the advantage that, for machines as well
+as men, it is completely unambiguous as well as easily
+readable. The "email-ru.tex" utility does the translation
+*both* ways without human intervention, and the conversion
+(8-bit) ==> (7-bit) ==> (8-bit) gives back *exactly* the
+original 8-bit Russian text. (One minor oddity to remember:
+terminal spaces on all lines are deleted.)
+
+     Thus, by ASCII Cyrillic encoding a Russian text file,
+one can archive and transfer it and conveniently and safely.
+The utility "email-ru.tex" provides the means for encoding
+and decoding almost anywhere.
+
+     Outside of Russia, with no Russian keyboard available,
+one can now accurately type and read Russian using
+ASCII-Cyrillic.
+
+     The converter "email-ru.tex" is programmed as a macro
+package for the widely (and even freely) available program
+called TeX. It is widely installed, and even the most modest 
+installation of TeX (in version >=3 of 1989) should suffice.
+
+     It is fair here to think of TeX as a machine accepting
+many attachments like "email-ru.tex", which permit one to do
+a great variety jobs in the world of documentation.
+Here is an internet address leading to many choices of
+TeX implementation:
+
+          http://www.TUG.org
+
+     The simplest configuration or "format" of TeX called
+"Plain"  is best; but there is a good chance that 
+a randomly chosen format will also work.
+ 
+     Beginner's operating instructions for using
+"email-ru.tex" once the TeX program is available are
+simple:-
+
+(i) put a copy of the file to convert, alongside of
+email-ru.tex and give it the name "IN.txt".
+
+(ii) process "email-ru.tex" (not "IN.txt") with Plain TeX. The
+usual command line is:
+
+         tex email-ru.tex<return>
+
+On computers with a graphical interface, one instead
+usually just pushes the icon of "email-ru.tex" onto the 
+icon of the TeX program, indicating the format Plain if
+the occasion offers itself.
+
+(iii) follow the instructions offered by email-ru.tex. An
+explanatory prolog and trailer will be added to the converted
+output.
+
+
+
+PITFALL: A few important TeX implementations, particularly
+under the unix and Macintosh operating systems, cannot be
+configured to \write true octets > 127 as "email-ru.tex"
+expects in converting *from* ASCII-Cyrillic *to* 8-bit
+Cyrillic text.  Instead, octets >= 128 are represented by 4
+ASCII character 'pseudo-octets'  "^^xy" where "xy" is the
+lowercase two digit hexadecimal notation for the octet.  If
+you encounter this in your announced 8-bit output from
+"email-ru.tex", please refer to the appendix called "The ^^xy
+pitfall" to learn how you can work around this difficulty.
+
+
+
+                   SECTION 2
+
+    *** Russian ASCII-Cyrillic for email-ru.tex ***
+
+
+       This section is a practical introduction to
+the new ASCII-Cyrillic system.
+
+     The 33 letters of the modern Russian alphabet, in
+alphabetic order, are typed:
+
+     a b v g d e 'o 'z z i j k l m n o p r
+     s t u f x 't 'c w 'w q y h 'e 'u 'a    
+
+The letter  'o  is an <e-dieresis> pronounced "yo", and in
+principle it should be placed immediately after e. However,
+most Russian dictionaries list it as an accented Russian e
+and not as an autonomous letter like the other 32.
+
+     The MS Windows 8-bit version is:
+
+%#Cy(
+     а б в г д е ж з и й к л м н о п р
+     с т у ф х ц ч ш щ ъ ы ь э ю я    ё
+%#Cy)
+
+Similarly for capital letters:
+
+     A B V G D E 'O 'Z Z I J K L M N O P R
+     S T U F X 'T 'C W 'W Q Y H 'E 'U 'A   
+
+correspond to:
+
+%#Cy(
+     А Б В Г Д Е Ё Ж З И Й К Л М Н О П Р
+     С Т У Ф Х Ц Ч Ш Щ Ъ Ы Ь Э Ю Я   
+%#Cy)
+
+     Where there are several ergonomically "optimal" choices for 
+typing a Russian character, several may be admissible.
+Thus:
+
+     'g='z     's=w    c='t     'k=x
+
+Incidentally, the strongest justification for typing "c" for a 
+letter consistently pronounced "ts" is the 
+traditional Russian recitation of the Latin alphabet: 
+ah beh tseh deh ...
+
+     For the Russian number character, which resembles in
+shape the pair "No", ASCII-Cyrillic uses the notation  '[No]
+or alternatively  'N.  A short list of important
+representations for non-letter characters are:
+
+     '[No]   Cyrillic number sign = 'N
+     '[<<]   Cyrillic left quotes (left guillemets) = '<
+     '[>>]   Cyrillic right quotes (right guillemets) = '>
+     '[,,]   Cyrillic left inner double quotes ='[LQ]
+     '["]    Cyrillic right inner double quotes ='[RQ] (*not* '[''])
+     '[']    Single right quote ='[rq] (usually = '{apos})
+     '[`]    Single left quote  ='[lq]
+     '[---]  long dash ='[emdash]
+     '[--]   medium dash ='[endash]
+     '[...]  dots (suspension) ='[dots]
+     '[<=]   less than or equal ='[leq]
+     '[>=]   greater than or equal ='[geq]
+     '[/=]   not equal ='[neq]
+     '[nbsp] unbreakable space
+     '[\-]   soft hyphen ='[shy]
+     '[^o]   degree(s) ='[degree]
+     '[**]   bullet ='[bullet]
+     '[~~]   approx ='[approx]
+
+     Conventions  established by TeX or PostScript or Unicode are
+followed; however, additionally, some short forms with mnemonic
+value are available as the above examples illustrate. An adequate
+table of concordances of norms can be found by searching for the
+word "currency" in this file.
+
+     [In TeX typescripts, many of the above diacritics already
+have equally convenient ASCII representations as a TeX control
+word beginning with "\" .  Thus few of the above concern TeX
+users.]
+
+     For the Cyrillic *letter* "gup" not in the modern Russian
+alphabet of 33 letters, ASCII-Cyrillic uses '{gup} (and
+'{GUP} for the uppercase form). Similarly for other Cyrillic
+characters. The braces proclaim a Cyrillic letter.
+
+     The ASCII-Cyrillic expression for an octet >127 *not*
+encoded to any normalized character, is !__xy where  xy is the
+two-digit hexadecimal representation of the octet.  For  example,
+octet "8B, in the KOI8 encoding, is for non-text graphic
+purposes and thus is rendered in ASCII-Cyrillic format as
+!__8b. Conversion back to the 8-bit form will work.   However,
+although the 5 octet string "!__8b" is ASCII text, this text
+is not  independent of 8-bit encoding. Thus, it is best to
+eliminate  such "unencoded" or "meaningless" octets.
+
+     Beware that, if, in ASCII-Cyrillic, you type simply
+"Coca-Cola", then you get:
+
+%#Cy(
+                  Чоча-Чола
+%#Cy)
+
+     ASCII-Cyrillic is not well designed for typing English
+sentences, but occasional English words or letters are used
+in Russian, so ASCII-Cyrillic allows one to type !U for an
+isolated U and:
+
+     !Coca-!Cola        for       Coca-Cola
+
+TeX is a powerful stable and portable formatting 
+system -- perhaps the most widely used for scientific and 
+technical documents. For a continental European language with 
+an accented Latin alphabet (French for example), a TeX 
+typescript is often created as an 8-bit text file that (just 
+as for Russian) depends on 8-bit encoding. However TeX itself 
+has always offered an alternative more prolix ASCII form for 
+such accented latin letters; and it has always served to provide 
+exchangeable ASCII typescripts that are readable and editable. 
+ASCII-Cyrillic seems to be the first ASCII scheme to offer 
+something similar for all Russian TeX typescripts. 
+
+To let TeX users more easily type in ASCII-Cyrillic, the
+latter preserves TeX control sequences like \begin.  The
+familiar (La)TeX command
+
+     \begin{document}
+
+is thus expressed as:
+
+     \begin{!document}
+
+Here \ and ! have special roles, and are called escape characters
+because they allow the letter sequences "begin" and "document"
+to escape from routine conversion between English letters and
+Russian Cyrillic letters.
+
+     Since the three ASCII characters ' ! \  do have special
+powers to influence the interpretation of what follows, their
+syntax in ASCII-Cyrillic typing has some eccentricities.
+Fortunately, these occur only rarely. They will be discussed
+in a file "email-ru.spc" (not yet available) that will contain
+more formal specifications for ASCII-Cyrillic.  In the
+interim, curious users can probe the intricacies using
+"email-ru.tex". (Please report inconsistencies and
+infelicities to the author!)
+
+     The ASCII non-letter characters are all common to Russian
+and English, namely:
+
+   <space>
+   ! " # $ % & ' ( ) * + , - . /
+   0 1 2 3 4 5 6 7 8 9 : ; < = > ? @
+   [ \ ] ^ _ `
+   { | } ~
+
+It is worth remembering these, since you can then pretty well
+identify ASCII text at sight. All of these, except on occasion
+' ! \ ,  can be freely used in ASCII-Cyrillic typing of Russian
+prose; they are not altered under conversion to an 8-bit
+encoding.
+
+     One advantage of ASCII-Cyrillic representation is that it
+appears the same on every computer in the world today. Indeed,
+the ASCII encoding has for decades been a universally (but not
+exclusively) used standard for computers. Its use by programmers
+worldwide guarantees its validity for many future decades.
+
+     The MS Windows 8-bit Cyrillic encoding can be expected only in
+Russia and under MS Windows operating systems. On the other hand,
+the first 128 of 256 codes in it adhere to the universal ASCII
+standard (which is also an ISO standard). The same inclusion of
+ASCII holds for most other Cyrillic encodings in use today; at the
+technical level, "email-ru.tex" relies heavily on this convenient
+fact. Hopefully an overwhelming majority of Russian computer users
+work with one of the five 8-bit encodings currently supported by
+"email-ru.tex"; their tags for "email-ru.tex" are D,M,I,W,K
+respectively (the order being historical). Deviations  can be
+handled by introducing an an auxiliary encoding, as indicated in
+appendices, and using auxiliary keys H or E.
+
+     These tags are less discriminating than the conventional
+tags fully identifying encodings used by Russian computer
+screen fonts for text. There is in practice a one-to-many
+correspondence from keys in the user dialog to encodings:
+
+  D (Dos)  <=> cp866... MS DOS encodings
+  M (Mac)  <=> mac... Apple Macintosh Cyrillic encodings
+  I (Iso)  <=> iso88595 of 1988 for unix (Sun,DEC,HP,Linux,etc.)
+  W (Win)  <=> cp1251 for Microsoft Windows
+  K (Koi)  <=> koi8... Internet encodings, since RFC-1489 of 1993
+  H (Head) <=> encoding specified at the Head of the file
+    to be processed (see Appendix for syntax).
+  E (Extra)<=> Extra user-defined encoding -- same syntax but
+    located in (or via) the file "extraenc.tex".
+
+The casual user of "email-ru.tex" should should just notice
+which sort of computer environment he is using, and guess from
+the above list which of the five tags D,M,I,W,K best applies.
+Almost always, one of these five works perfectly:- because it is
+the same as for the computer involved as regards all characters
+actually used. (Deviations for unused characters are  of no
+practical significance!)
+
+     Technical comment: In the above list, ... stands for any
+continuation yielding some valid LaTeX input encoding tag for
+Cyrillic that you can find in the LaTeX file "cyinpenc.dtx".
+The latter builds files named "<encodingtag>.def" directly
+employed by  LaTeX installations. Alternative references for
+these  Cyrillic encodings are:
+
+ --- russian.el,  1994 by Valery Alexeev <ava@math.jhu.edu>
+"Display, translate and edit buffers containing Russian
+characters" an emacs editor macro package, LCD Archive Entry:
+~/packages/russian.el.Z
+ --- nic.funet.fi:/pub/culture/russian/comp/characters
+ --- cyrillic.encoding.faq by Andras Kornai <andras@calera.com>
+ --- lettermappings.gz by Dmitri Vulis <dlv@sunyvms1.bitnet>
+ --- internet RFC 1489
+ --- http://www.fingertipsoft.com/ref/cyrillic
+
+     Conversion between different 8-bit encodings is possible
+using "email-ru.tex". But one must do it in two steps, going via
+the ASCII_Cyrillic 7-bit format.  Beware that in case the target
+encoding does not contain a certain character in the source file,
+that character is left in a distinctive ASCII-Cyrillic form.
+This, in practice, helps you see and repair the damage.  Such
+damage is neither exceptional nor avoidable since the characters
+covered by the encodings vary somewhat with the encoding. But it
+is usually minor and repairable.
+
+Exercise: You know enough at this point to use ASCII-Cyrillic to
+type or read any Russian email or any piece of Russian prose,
+for  example, that in the first section. Convert forth and back
+between  7-bit and 8-bit forms using "email-ru.tex".
+
+
+     This version of "email-ru.tex" is preliminary; if a problem is
+is encountered, please first check the most up-to-date version; then
+please communicate bugs and suggestions to the author.
+
+     Possibilities for future development:
+
+ -- support for more Cyrillic alphabets
+ -- support for Unicode Cyrillic
+ -- support for the Mime protocol
+ -- batch mode
+ -- segmented files (e.g. just certain parts marked for conversion)
+ -- integration with TeX for rapid typesetting of  ASCII-Cyrillic
+text.
+
+     Thanks are due to the members of the Cyrillic TeX discussion
+list (CyrTeX-en@vsu.ru) for clarifying the problems a utility
+such as this one should address.  The list archives are available
+at:
+
+      https://info.vsu.ru/Lists/CyrTeX-en/List.html
+
+Advice from Maksym Polyakov <mpoliak@pcomp.nauu.kiev.ua>  was
+essential in establishing the Ukrainian mode.
+
+
+            Laurent Siebenmann
+
+
+              lcs@topo.math.u-psud.fr
+              lcs@math.polytechnique.fr
+              laurent@math.toronto.edu
+
+
+ASCII-Cyrillic home page in December 2000:
+
+   http://topo.math.u-psud.fr/~lcs/ASCII-Cyrillic/ascii-cy.htm
+
+Copyright Conditions: Gnu Public Licence
+
+
+
+  *** APPENDIX   ASCII-Cyrillic for Bulgarian and Byelorussian ***
+
+       ASCII-Cyrillic for Bulgarian coincides with  ASCII-Cyrillic
+for Russian.
+
+       ASCII-Cyrillic for Byelorussian is fully compatible with
+Russian, but uses two  extra letters:
+
+%#Cy(
+       і  ў
+%#Cy)
+             <==>  '{ii}  '{ushrt}  <==>  'i  'v
+
+The short forms are currently available even in Russian mode, but
+this may change  in future versions.
+
+
+
+      *** APPENDIX   ASCII-Cyrillic for Ukrainian ***
+
+     This is similar to but distinct from the Russian mode and is
+*not* compatible with it.
+
+     The 33+1 letters of the modern Ukrainian alphabet, listed in
+alphabetic order (MS Windows 8-bit encoding here) are:
+
+%#Cy(
+     а  б  в  г  ґ  д  е  є  ж  з  и  і  ї  й  к  л  м
+     н  о  п  р  с  т  у  ф  х  ц  ч  ш  щ  ю  я  ь  ’
+%#Cy)
+
+and the preferred Ukrainian ASCII-Cyrillic (short) form is:
+
+     a  b  v  g  'g  d  e  'e  'z  z  y  i  'i  j  k  l  m  n
+     o  p  r  s  t  u  f  x  't  'c  w  'w  'u  'a  q  '*
+
+The 34th character is a Cyrillic apostrophe, a modifier letter that
+has various roles, among them those of the hard sign of Russian. The
+representation valid for all Cyrillic languages is '{apos}.
+
+     The following four letters do not occur in
+Russian:
+
+%#Cy(
+  ґ є і ї
+%#Cy)
+   <==>  '{gup} '{ie} '{ii} '{yi}    (for all Cyrillic)
+   <==>  'g  'e  i  'i   (for Ukrainian)
+   <==>  (no Russian short forms)
+
+The forms '{gup} etc. (in the second row) are the same for all
+cyrillic languages.
+
+     Reciprocally, the following four Russian letters
+do not occur in Ukrainian:
+
+%#Cy(
+     ъ ы э ё
+%#Cy)
+     <==> '{hrdsn}  '{ery}  '{erev}  '{yo}    (for all Cyrillic)
+     <==> (no Ukrainian short forms)
+     <==> q  y  'e  'o    (for  Russian)
+
+
+     The following two letters are common to Ukrainian and Russian
+but the ASCII-Cyrillic short forms are different.
+
+%#Cy(
+    и   ь
+%#Cy)
+           <==>  '{i}  '{sftsn}   (for all Cyrillic)
+           <==>  y  q    (for  Ukrainian)
+           <==>  i  h    (for  Russian)
+
+The use, in Ukrainian ASCII-Cyrillic,  of q as a short form for
+'{sftsn} is justified by the fact that the shape q rotated by 180
+degrees is similar to that of '{sftsn}.   But there is another
+reason for this choice. It permits one to use  h as an alternative
+Ukrainian short form for '{g}  --- which  is natural since in many
+cases  '{g}  is pronounced like the harsh German h in "Horst".
+
+     The full list of alternatives short forms is:
+
+       's=w 
+       c='t  
+       'k='x=x
+       h=g  
+
+     Similarly for capital letters. In particular:
+
+%#Cy(
+     А  Б  В  Г  Ґ  Д  Е  Є  Ж  З  И  І  Ї  Й  К  Л  М  Н
+     О  П  Р  С  Т  У  Ф  Х  Ц  Ч  Ш  Щ  Ю  Я  Ь   ’
+%#Cy)
+
+have the Ukrainian ASCII-Cyrillic representation:
+
+     A  B  V  G  'G  D  E  'E  'Z  Z  Y  I  'I  J  K  L  M  N
+     O  P  R  S  T  U  F  X  'T  'C  W  'W  'U  'A  Q  '*
+
+Long forms valid for all Cyrillic languages are:
+
+    '{A}  '{B}  '{V}  '{G}  '{GUP}  '{D}  '{E}  '{IE}  '{ZH}  '{Z}
+    '{R}  '{I}  '{II}  '{YI}  '{J}  '{K}  '{L}  '{M}  '{N}  '{O}
+    '{P}  '{S}  '{T}  '{U}  '{F}  '{X}  '{C}  '{CH}
+    '{SH}  '{SHCH}  '{YU}  '{YA}  '{SFTSN}  '{APOS} 
+
+Note that the Ukrainian apostrophe '{APOS} is a *letter*
+and unlike '{SFTSN} it normally coincides with the lowercase
+version: normally '{APOS}='{apos}.  In case of a distinction
+'* will be '{apos}.
+
+     There is an official lossy "Latin transliteration" for
+Ukrainian using the ligature concept, and it is supported by
+"email-ru.tex". See the Ukrainian national norm of 1996
+summarized at:
+
+      http://www.rada.kiev.ua/translit.htm
+
+Beware that the official transliterations of the six letters
+
+       '{g}  '{ie}  '{yi}  '{ishrt}  '{yu}  '{ya}
+
+are *context dependent*.  This is a good reason for relying
+on "email-ru.tex" to do the official  transliteration.
+
+
+     The other aspects of ASCII-Cyrillic are the same for Ukrainian
+and Russian.
+
+
+
+
+*** APPENDIX  Specifying a Cyrillic encoding vector in the input ***
+
+
+     The following is technical, but probably well within the reach
+of confirmed TeX users.
+
+     The encoding option key  "H" (for Header) in the main dialog
+serves to request use of an encoding vector given in full near the top
+of the input file.
+
+     Here is the appropriate syntax; it should be imitated quite
+exactly. Beginning in the first 80 lines of the  file to convert
+(normally IN.txt), there should occur the following  sort of
+structure:
+
+
+ %#[<ASCII-CYRILLIC_MODIF>#]
+ \ifx\AsciiCyrModif\relax %%% TeX gateway
+ %%% Encoding to be used only if requested via the
+ %%% "H" encoding option key of the "email-ru.tex" dialog.
+ %%% LaTeX encoding Tag: cp866
+ \def\AuxEncodingVect@{%
+  /A./B./V./G./D./E./ZH./Z.%% "80--
+  /I./ISHRT./K./L./M./N./O./P.%% --"8F
+  /R./S./T./U./F./H./C./CH.%% "90--
+  /SH./SHCH./HRDSN./ERY./SFTSN./EREV./YU./YA.%% --"9F
+  /a./b./v./g./d./e./zh./z.%% "A0--
+  /i./ishrt./k./l./m./n./o./p.%% --"AF
+  \.\.\.\.\.\.\.\.%% "B0--
+  \.\.\.\.\.\.\.\.%% --"BF
+  \.\.\.\.\.\.\.\.%% "C0--
+  \.\.\.\.\.\.\.\.%% --"CF
+  \.\.\.\.\.\.\.\.%% "D0--
+  \.\.\.\.\.\.\.\.%% --"DF
+  /r./s./t./u./f./h./c./ch.%% "E0--
+  /sh./shch./hrdsn./ery./sftsn./erev./yu./ya.%% --"EF
+  /YO./yo./IE./ie./YI./yi./USHRT./ushrt.%% "F0--
+  |deg.|bullet.|cdot.|surd.|No.|coin.|blacksquare.|nbsp.%% --"FF
+  }
+ %%% This is the old "Standard" version of DOS encoding cp~866.
+ %%% Key D gave the New Alternative Variant" or "NAV" version
+ %%% The differences lie in the range "F2--"FE.
+ \fi
+ %#[<ASCII-CYRILLIC_ENDMODIF>#]
+
+This provides an ordered list of 128 definitions for the encoding
+positions 128="80 to 255="FF. There are, basically,  three sorts of
+definition and 8 definitions per row. For example:
+
+ --- "/SHCH." encodes position "9C as the Cyrillic *letter* whose TeX
+name is \CYRSHCH. The truncated TeX name is always used.
+
+ --- "|nbsp."  encodes position "FF as the unbreakable space. The "|"
+indicates that this is a *diacritic* character. The names for
+diacritical characters used here are the shorter alphabetical names
+that one finds in the list of diacritics you can locate by searching
+for the word "currency" in this file.
+
+ --- "\."  encodes position "B0 as a *undefined*, and similarly for
+"B1--"DF.
+
+See also comments preceeding the internal encodings.
+
+     If there is no encoding definition set up in the above manner, then
+"email-ru.tex" will abort.
+
+     Material on lines before:
+
+ %#[<ASCII-CYRILLIC_MODIF>#]
+
+will be skipped. Then, lines up to and including:
+
+ %#[<ASCII-CYRILLIC_ENDMODIF>#]
+
+will be copied verbatim and appear immediately after the usual
+prologue for the output. Lines after that will be converted using the
+designated encoding.
+
+Beware: If the H option key is not used, then (in the present version)
+the *whole* input file will be converted with another specified
+encoding.  Remove to safe storage unused encodings; they may confuse
+inexperienced users.
+
+
+
+  *** APPENDIX  Specifying an external Cyrillic encoding vector ***
+
+     In the main dialog the encoding option key "E" (for External) is
+devoted to this.  It requests an encoding via the *user-defined* file
+"extraenc.tex". The simplest possibility for "extraenc.tex" is exactly
+the sort of segment
+
+ %#[<ASCII-CYRILLIC_MODIF>#]
+ ...
+ %#[<ASCII-CYRILLIC_ENDMODIF>#]
+
+used with the "H" option key.  The behavior commanded is the same
+as with the "H" option key, except that the whole input file is
+converted.  In particular, the encoding vector will be inserted
+into the output, below the usual prolog.
+
+     A TeX programmer would be able to provide access via a
+dialog in "extraenc.tex" to an arbitrary number of encoding
+vectors.
+
+ 
+
+            *** APPENDIX  The ^^xy Pitfall ***
+
+     The pitfall to be discussed affects chiefly conversion
+from 7-bit ASCII-Cyrillic text files to 8-bit Cyrillic text.
+
+     The author of TeX, Donald Knuth, provided, beginning with the
+first 8-bit version 3 of 1989, a "pseudo-8-bit" mechanism allowing
+octets > 127 being output via the TeX primitive command \write to
+be written each as a sequence of four ASCII octets ^^xy 
+(called a "pseudo-octet") where xy is the the 2-digit lowercase
+hexadecimal notation for the octet. For example, octet 128 becomes
+^^80, and octet 255 becomes ^^ff.
+
+     The use of this mechanism seems to be standard TeX. 
+Presumably, it was intended to allow TeX to function on 
+operating systems that are unable to handle text files 
+containing octets >= 128. However, there are now virtually no 
+such operating systems, and the feature is a hinderance to many 
+users, in particular to users of email-ru.tex wishing to extract 
+true 8-bit text from ASCII-Cyrillic. Thus, *most* TeX 
+implementations now offer true 8-bit text output, at least 
+optionally -- thus enabling "email-ru.tex" to convert 
+ASCII-Cyrillic to true 8-bit text.
+ 
+     If your TeX writes only "pseudo-octets", try the following:
+
+WORKAROUND (A)  If (as is highly probable) you *know* that the
+*intended* 8-bit output would contain no pseudo-octet ^^xy then you
+can finish the conversion job by applying the tiny converter "Kto8"
+to get rid of the "pseudo-octets". The name "Kto8" is a contraction
+of the phrase "Knuthian-to-8-bit". "Kto8" currently scans once,
+converting any Knuthian pseudo-octet ^^xy encountered to the
+corresponding genuine octet. Further, it does something similar
+for Knuth's representations of the form ^^X  for the octets
+0,1,..,31, and 127. It is self-documenting. Look for "Kto8" in the
+ASCII-Cyrillic distribution directory; there will be binaries for
+the Macintosh, Windows, and some unix operating systems.
+
+WORKAROUND (B)  Examine the operating options for your TeX
+implementation (normally in documentation provided by the
+implementor) to see if, by hook or by crook, you can get true
+8-bit output. Many implementors, commercial or not, are extremely
+responsive to user enquiries.
+
+WORKAROUND (C)  Ask yourself whether an 8-bit Cyrillic version is
+strictly necessary.  If the 8-bit output was really intended for
+typographic composition by TeX, then you will probably find that
+the "pseudo-8-bit" output will be equally acceptable to TeX,
+albeit unreadable to human eyes.
+
+WORKAROUND (D)  Use one of the many fully 8-bit-capable TeX
+installations.
+
+
+
+     Here is a list of TeX implementations for which the current
+version is known to offer true 8-bit \write output, at least
+optionally (see www.tug.org for other TeX implementations).
+PLEASE CONTRIBUTE ADDITIONS TO THIS LIST!
+
+
+** MS Windows Operating System, including DOS
+
+ -- BaKoMa TeX by B.K. Malyshev
+ -- emtex, for DOS, by E. Mattes 
+    Comments: Create format file using option flag -o.
+    Octet 255 infortunately remains ^^ff.
+ -- fptex for Windows, by F. Popineau.
+    Comments: It is a Windows port of tetex.
+ -- miktex for Windows, by C. Schenk.
+ -- VTeX by MicroPress Inc.
+    Comments: 8-bit output is the default behavior for the
+console-mode compilers [free versions on Linux and OS/2, as well
+as Console mode on Win] but the 7-bit behaviour is the default
+in GUI version which is integrated into the Vtex/Win IDE. In
+either case, there is a switch to change the behaviour.
+ -- Y&Y TeX, by Y&Y Inc, http://www.Y&Y.com 
+    Comment: By default, output is 8-bit. Command line option -K
+gives pseudo-8-bit output.
+    
+
+** Macintosh OS
+
+ -- Textures, by Blue Sky Research (since TeX 3)
+ -- OzTeX from v4 of 2001
+    Comment: To get true 8-bit output, you must set 
+write_8_bit = true  in your configuration file and then 
+rebuild your format file(s).
+
+
+** Unix OS and Linux OS
+
+ -- tetex for unix and linux, by T. Esser 
+    It is based on web2C.
+ -- web2C maintained currently by Olaf Weber.
+    Comment: Specific compilations not included, 
+    cf. tetex and fptex.
+    In case your default configuration is not OK,
+    try the tex command line option:
+        "--translate-file=cp8bit.tcx"
+    and learn about TCX files.
+ -- VTeX for Linux (see MS Widows listing).
+
+ ---------------
+
+     Veteran TeX users should note one more subtle point 
+concerning pseudo-octets:-  When in its usual *typesetting* mode 
+and reading a pseudo octet  ^^xy, TeX will behave exactly as if 
+it has read the octet numbered  xy (in lowercase hexadecimal 
+notation).  In contrast, when running "email-ru.tex", TeX 
+regards an ^^xy in the input file as merely a sequence of 4 
+ASCII octets. This is because ^ then has TeX category 12 
+('other'). If you really truly want "email-ru.tex" to have the 
+more exotic behavior, you can, in effect, obtain it by 
+preliminary processing of the input with Kto8.
+
+
+         *** APPENDIX   Email Transfer Checklist ***
+
+     ASCII-Cyrillic is a useful format for simplest email
+transfers of Cyrillic text files. The universally accepted  ASCII
+text part of an email message can be used. This feature explains
+the name "email-ru.tex".
+
+     For informal letters, it may be as good to use a
+ligature-based ASCII representation (also generated by
+"email-ru.tex"). But, if the typescript is "work in progress" (a
+draft of work to be published later on), then a *faithful* system
+like ASCII-Cyrillic is infinitely better.
+
+     As with any electronic transfer, care is required to avoid
+mutilation and  misinterpretation.  Watch the following points.
+
+(1)  Be sure the ASCII-Cyrillic version has no "meaningless"
+characters like !__ab.  You may have to change your encoding or
+revise the 8-bit source to get rid of these without real damage to
+your typescript.
+
+(2)  Arrange that the file has no long lines (say >70 characters).
+Many text editors, word processors, and web browsers allow
+adjustment of text file line breaks; check out their text file I/O
+features.
+
+(3)  Make sure the ASCII-Cyrillic version is indeed faithful.
+First delete trailing spaces on all lines (as TeX ignores these).
+Then take your 8-bit version,  convert doubly  8 ==> 7 ==> 8,  and
+check that the resulting  8-bit version is restored 100% (using a
+file comparison utility).
+
+(4)  Arrange that no "tilde" character "~" occurs at the beginning
+of any line, for example, by inserting a space before each line.
+
+(5)  Be sure the recipient has TeX, and also "email-ru.tex".
+Fortunately, the latter is ASCII text that can be sent by email
+after precaution (4).
+
+(6)  If you know which 8-bit encoding your correspondent will be
+using, then do that 7 ==> 8 bit conversion yourself, and verify
+that his/her encoding includes  all the characters you are using.
+If not, in the 8-bit file, there will be some "unencoded" letters
+or diacritics appearing in the form '{??} or '[??], for a suitable
+tag ??.
+
+(7)  If your correspondent uses a mysterious 8-bit encoding, you
+can learn what it is by examining his/her 8-bit typescripts. Then
+include the mysterious encoding vector at the top of the
+ASCII-Cyrillic version as indicated in another APPENDIX. Tell your
+correspondent to select the "H" encoding option key in converting
+the received email to 8-bit. The *whole* email can be processed;
+just the part after the encoding vector will be output, and in the
+mysterious 8-bit encoding.
+
+(8)  The following test may detect email ASCII text transmission
+problems beyond those already mentioned. They were frequent in
+early days but are now quite rare.
+
+
+ %%%%%%%%%%%% ASCII Character transmission test
+ %
+ %       Upper case letters: ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ %       Lower case letters: abcdefghijklmnopqrstuvwxyz
+ %                                   Digits: 0123456789
+ % Square, curly, angle braces, parentheses: [] {} <> ()
+ %           Backslash, slash, vertical bar: \ / |
+ %                              Punctuation: . ? ! , : ;
+ %          Underscore, hyphen, equals sign: _ - =
+ %                Quotes--right left double: ' ` "
+ %"at", "number" "dollar", "percent", "and": @ # $ % &
+ %           "hat", "star", "plus", "tilde": ^ * + ~
+ %
+ %%%%%%%%%%%%%%%%%%%%%%%%
+ %
+ % A single error can be disastrous in TeX files.
+ %
+ %%%%%%%%%%%%%%%%%%%%%%%%
