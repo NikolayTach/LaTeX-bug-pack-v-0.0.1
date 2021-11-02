@@ -1,0 +1,15 @@
+\RequirePackage{latexbug}
+\documentclass[a4paper,11pt,twoside]{proc}
+\makeatletter
+\let\@oldevenfoot\@evenfoot
+\def\@evenfoot{\normalfont\pagename{} \thepage \hfil \leftmark}
+\makeatother
+\markboth{Author et al.: Lorem Ipsum}{Journal of Lorem Ipsum}
+\begin{document}
+hello
+\newpage
+world
+\newpage
+hello
+\newpage
+\end{document}
